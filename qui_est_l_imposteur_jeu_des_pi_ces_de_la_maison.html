@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qui est l'Imposteur ? - Les Pièces & Activités de la Maison</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            frenchBlue: '#002654',
+            frenchRed: '#ED2939',
+            spaceDark: '#0B0F19',
+            cardDark: '#1E293B',
+            accentCyan: '#06B6D4',
+            accentPurple: '#8B5CF6'
+          },
+          fontFamily: {
+            sans: ['Fredoka', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Fredoka & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Fredoka', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    .card-flip {
+      perspective: 1000px;
+    }
+    .card-inner {
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    .card-flip.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      backface-visibility: hidden;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(237, 41, 57, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(237, 41, 57, 0.8); }
+    }
+    .impostor-glow {
+      animation: pulseGlow 2s infinite;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-red-500 selection:text-white">
+
+  <!-- Application Header -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-frenchBlue via-indigo-600 to-frenchRed flex items-center justify-center text-white font-bold text-xl shadow-lg border border-white/20">
+          🕵️
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-red-400 via-purple-300 to-blue-400 bg-clip-text text-transparent">
+            Qui est l'Imposteur ?
+          </h1>
+          <p class="text-xs text-slate-400 flex items-center gap-1">
+            <span>🏠 Les Pièces & Activités</span>
+            <span class="text-slate-600">•</span>
+            <span class="text-xs bg-red-950 text-red-300 px-1.5 py-0.5 rounded border border-red-800/50">FRANÇAIS</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Main Navigation Tabs -->
+      <nav class="hidden md:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <button onclick="switchTab('game')" id="nav-game" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow">
+          <i class="fa-solid fa-gamepad"></i> Jouer (Game)
+        </button>
+        <button onclick="switchTab('starters')" id="nav-starters" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
+          <i class="fa-solid fa-comment-dots text-purple-400"></i> Amorces de Phrases
+        </button>
+        <button onclick="switchTab('vocab')" id="nav-vocab" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
+          <i class="fa-solid fa-house text-emerald-400"></i> Vocabulaire
+        </button>
+        <button onclick="switchTab('rules')" id="nav-rules" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
+          <i class="fa-solid fa-book-open text-amber-400"></i> Règles & Tuto
+        </button>
+      </nav>
+
+      <!-- Quick Action Header -->
+      <div class="flex items-center gap-2">
+        <div id="room-code-badge" class="hidden px-3 py-1.5 rounded-lg bg-indigo-950/80 border border-indigo-700/60 text-indigo-300 text-xs font-bold flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>CODE: <strong id="active-room-display" class="text-white text-sm tracking-widest font-mono">----</strong></span>
+        </div>
+        <button onclick="toggleAudioEngine()" id="audio-toggle-btn" title="Activer/Désactiver la prononciation audio" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-2 transition">
+          <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
+          <span class="hidden sm:inline" id="audio-status-label">Audio: ON</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="md:hidden flex border-t border-slate-800/80 bg-slate-900 px-2 py-1 justify-around text-xs">
+      <button onclick="switchTab('game')" id="nav-mob-game" class="mob-nav-btn py-1 px-3 rounded-md text-indigo-400 font-bold flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-gamepad text-base"></i>
+        <span>Jouer</span>
+      </button>
+      <button onclick="switchTab('starters')" id="nav-mob-starters" class="mob-nav-btn py-1 px-3 rounded-md text-slate-400 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-comment-dots text-base"></i>
+        <span>Phrases</span>
+      </button>
+      <button onclick="switchTab('vocab')" id="nav-mob-vocab" class="mob-nav-btn py-1 px-3 rounded-md text-slate-400 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-house text-base"></i>
+        <span>Vocabulaire</span>
+      </button>
+      <button onclick="switchTab('rules')" id="nav-mob-rules" class="mob-nav-btn py-1 px-3 rounded-md text-slate-400 flex flex-col items-center gap-0.5">
+        <i class="fa-solid fa-book-open text-base"></i>
+        <span>Règles</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: GAME SCREEN (ROOM CODE MULTIPLAYER + SOLO VS AI) -->
+    <!-- ========================================================================= -->
+    <section id="tab-game" class="tab-content flex-1 flex flex-col">
+      
+      <!-- Game Mode Selection Header -->
+      <div id="game-setup-view" class="max-w-3xl mx-auto w-full space-y-6 my-auto py-4">
+        
+        <!-- Welcome Hero -->
+        <div class="text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-700/50 text-indigo-300 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Multijoueur en Direct • Rejoignez avec un Code Salle
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Trouvez l'Imposteur dans la Maison !
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+            Chaque élève rejoint la partie depuis son propre écran avec le code. L'Imposteur doit deviner le mot en observant vos indices !
+          </p>
+        </div>
+
+        <!-- Mode Cards Selection -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- Mode 1: Join via Room Code (For Students) -->
+          <div onclick="selectGameMode('join')" class="cursor-pointer group relative bg-slate-900/90 border-2 border-emerald-600/60 hover:border-emerald-400 rounded-2xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/20 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-110 transition">
+                <i class="fa-solid fa-key"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white flex items-center justify-between">
+                  <span>Rejoindre une Salle</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  Vous êtes élève ? Entrez le code à 4 chiffres donné par votre professeur pour rejoindre.
+                </p>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-emerald-400 font-bold text-xs">
+              <span>Entrer le code &rarr;</span>
+            </div>
+          </div>
+
+          <!-- Mode 2: Host Room Code (For Teacher) -->
+          <div onclick="selectGameMode('host')" class="cursor-pointer group relative bg-slate-900/90 border-2 border-indigo-600/60 hover:border-indigo-400 rounded-2xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xl group-hover:scale-110 transition">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white flex items-center justify-between">
+                  <span>Créer une Salle (Prof)</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  Générez un code de salle en direct pour votre classe et suivez la partie sur grand écran.
+                </p>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-indigo-400 font-bold text-xs">
+              <span>Générer un code &rarr;</span>
+            </div>
+          </div>
+
+          <!-- Mode 3: Solo vs AI Classmates -->
+          <div onclick="selectGameMode('solo')" class="cursor-pointer group relative bg-slate-900/90 border-2 border-purple-600/60 hover:border-purple-400 rounded-2xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white flex items-center justify-between">
+                  <span>Mode Solo vs IA</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  S'entraîner seul(e) avec des camarades virtuels intelligents.
+                </p>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-purple-400 font-bold text-xs">
+              <span>Jouer solo &rarr;</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- STUDENT JOIN BOX -->
+        <div id="student-join-box" class="hidden bg-slate-900/95 border border-emerald-500/40 rounded-2xl p-6 space-y-4 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-right-to-bracket text-emerald-400"></i> Rejoindre la Salle de Classe
+            </h3>
+            <button onclick="cancelSetup()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800">Annuler</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Code de Salle (Room Code)</label>
+              <input type="text" id="join-code-input" maxlength="4" placeholder="ex: 4829" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono uppercase tracking-widest text-emerald-400 font-bold focus:outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Votre Prénom (Your Name)</label>
+              <input type="text" id="join-name-input" placeholder="ex: Thomas" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+            </div>
+          </div>
+          <button onclick="joinRoomByCode()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> Entrer dans la Salle
+          </button>
+        </div>
+
+        <!-- HOST / TEACHER CREATION BOX -->
+        <div id="host-config-box" class="hidden bg-slate-900/95 border border-indigo-500/40 rounded-2xl p-6 space-y-6 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-indigo-400"></i> Configuration de la Salle Multi-Écrans
+            </h3>
+            <button onclick="cancelSetup()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800">Annuler</button>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-2 uppercase tracking-wider">1. Thème du Vocabulaire</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button type="button" onclick="setTopicCategory('rooms')" id="topic-rooms" class="topic-btn p-3 rounded-xl border border-indigo-500 bg-indigo-950/60 text-indigo-200 text-xs font-bold text-left flex items-center gap-3">
+                <span class="text-xl">🏠</span>
+                <div>
+                  <div>Les Pièces uniquement</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Rooms</div>
+                </div>
+              </button>
+              <button type="button" onclick="setTopicCategory('activities')" id="topic-activities" class="topic-btn p-3 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 text-xs font-bold text-left flex items-center gap-3 hover:border-slate-700">
+                <span class="text-xl">🍳</span>
+                <div>
+                  <div>Les Activités uniquement</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Actions</div>
+                </div>
+              </button>
+              <button type="button" onclick="setTopicCategory('both')" id="topic-both" class="topic-btn p-3 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 text-xs font-bold text-left flex items-center gap-3 hover:border-slate-700">
+                <span class="text-xl">🎯</span>
+                <div>
+                  <div>Mélange Pièce + Activité</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Full Combo</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-2 uppercase tracking-wider">2. Nombre d'Imposteurs</label>
+            <select id="impostor-count-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+              <option value="1" selected>1 Imposteur</option>
+              <option value="2">2 Imposteurs (pour 6+ élèves)</option>
+            </select>
+          </div>
+
+          <button onclick="createNewOnlineRoom()" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-base shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Créer la Salle & Obtenir le Code
+          </button>
+        </div>
+
+        <!-- Sentence Starter Quick Drawer Toggle -->
+        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-slate-300">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-lightbulb text-amber-400"></i> Besoin d'aide pour parler pendant la partie ?
+          </span>
+          <button onclick="switchTab('starters')" class="text-indigo-400 font-bold hover:underline">
+            Voir les amorces de phrases &rarr;
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ROOM LOBBY VIEW (WAITING FOR PLAYERS) -->
+      <div id="game-lobby-view" class="hidden max-w-xl mx-auto w-full my-auto space-y-6 py-6 text-center">
+        <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl p-6 space-y-4 shadow-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950 text-indigo-300 text-xs font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            Salle Ouverte
+          </div>
+          <h2 class="text-xl font-bold text-slate-300">Code de Salle pour les Élèves :</h2>
+          <div id="lobby-code-display" class="text-5xl sm:text-6xl font-black font-mono tracking-widest text-emerald-400 bg-slate-950 py-4 px-6 rounded-2xl border border-slate-800 inline-block shadow-inner">
+            ----
+          </div>
+          <p class="text-xs text-slate-400">
+            Dites aux élèves d'aller sur l'application et de cliquer sur <strong>"Rejoindre une Salle"</strong> avec ce code.
+          </p>
+
+          <!-- Connected Players List -->
+          <div class="pt-4 border-t border-slate-800 text-left space-y-3">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-300">
+              <span>Élèves connectés (<span id="lobby-player-count">0</span>) :</span>
+              <span class="text-indigo-400 animate-pulse">En attente...</span>
+            </div>
+            <div id="lobby-players-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-1">
+              <!-- Dynamically filled -->
+            </div>
+          </div>
+
+          <!-- Host Launch Button -->
+          <button id="host-start-btn" onclick="startOnlineGameHost()" class="hidden w-full py-3.5 bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold text-base rounded-xl shadow-xl transition items-center justify-center gap-2">
+            <i class="fa-solid fa-play"></i> Lancer la Partie Maintenant !
+          </button>
+          <div id="student-waiting-notice" class="hidden text-xs text-amber-300 bg-amber-950/40 p-3 rounded-xl border border-amber-800/60">
+            ⏳ Le professeur va bientôt lancer la partie... Gardez cet écran ouvert !
+          </div>
+        </div>
+      </div>
+
+      <!-- GAMEPLAY ACTIVE VIEW: MULTI-DEVICE PERSONAL REVEAL -->
+      <div id="game-reveal-view" class="hidden max-w-xl mx-auto w-full my-auto space-y-6 py-6">
+        
+        <div class="flex items-center justify-between text-sm text-slate-400 bg-slate-900 p-3 rounded-xl border border-slate-800">
+          <span id="reveal-progress-label">Votre Écran Personnel</span>
+          <span class="text-xs bg-slate-800 text-emerald-400 px-2 py-0.5 rounded font-mono">🔒 Confidentialité Active</span>
+        </div>
+
+        <!-- Secret Card Container -->
+        <div class="card-flip w-full h-80 cursor-pointer" id="secret-card-container" onclick="toggleCardFlip()">
+          <div class="card-inner relative w-full h-full rounded-2xl shadow-2xl border-2 border-indigo-500/50">
+            
+            <!-- Card Front (Hidden State) -->
+            <div class="card-front absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-4">
+              <div class="w-20 h-20 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-4xl text-indigo-400">
+                👤
+              </div>
+              <div>
+                <h3 id="reveal-player-name" class="text-2xl font-bold text-white">
+                  Élève
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">
+                  Touchez votre carte pour découvrir votre rôle secret !
+                </p>
+              </div>
+              <div class="px-4 py-2 rounded-lg bg-indigo-900/50 border border-indigo-700/60 text-indigo-200 text-xs font-semibold flex items-center gap-2 animate-bounce">
+                <i class="fa-solid fa-hand-pointer"></i> Cliquer pour retourner la carte
+              </div>
+            </div>
+
+            <!-- Card Back (Secret Revealed) -->
+            <div id="card-back-element" class="card-back absolute inset-0 rounded-2xl p-6 flex flex-col items-center justify-between text-center border-2 border-indigo-500 bg-slate-900">
+              
+              <div class="w-full flex items-center justify-between text-xs text-slate-400">
+                <span id="card-back-player-title" class="font-bold">Mon Rôle Secret</span>
+                <span>🤫 Ne montrez pas aux voisins !</span>
+              </div>
+
+              <!-- Role Content (Innocent vs Impostor) -->
+              <div id="role-display-content" class="my-auto space-y-3">
+                <!-- Dynamically injected -->
+              </div>
+
+              <!-- Ready Button -->
+              <button onclick="event.stopPropagation(); proceedToDiscussion();" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow transition">
+                J'ai retenu mon rôle (Prêt &rarr;)
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-slate-500">
+          Votre rôle est synchronisé en toute sécurité sur votre propre appareil.
+        </p>
+
+      </div>
+
+      <!-- GAMEPLAY ACTIVE VIEW: DISCUSSION & CLUE ROUND -->
+      <div id="game-discussion-view" class="hidden max-w-4xl mx-auto w-full space-y-6 my-auto py-4">
+        
+        <!-- Header status -->
+        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 text-xs text-indigo-400 font-bold uppercase tracking-wider">
+              <span>🗣️ Tour de parole & Indices</span>
+            </div>
+            <h3 class="text-xl font-bold text-white">
+              Donnez vos indices en français !
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Utilisez les amorces de phrases ci-dessous pour parler sans trop en dire.
+            </p>
+          </div>
+          <button onclick="goToVotingStage()" class="py-2.5 px-5 bg-gradient-to-r from-red-600 to-indigo-600 hover:from-red-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check-to-slot"></i> Passer au Vote (Vote Now)
+          </button>
+        </div>
+
+        <!-- Interactive Clue Assistant Toolbar for Discussion -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+              Assistant de Phrase (Sentence Builder)
+            </h4>
+            <span class="text-[11px] text-slate-400">Sélectionnez une amorce de phrase :</span>
+          </div>
+
+          <!-- Quick Sentence Starters Carousel -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-1">
+            
+            <button onclick="insertClueStarter('Dans cette pièce, d\'habitude on...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
+              <span>"Dans cette pièce, d'habitude on..."</span>
+              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
+            </button>
+
+            <button onclick="insertClueStarter('On y trouve souvent...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
+              <span>"On y trouve souvent..."</span>
+              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
+            </button>
+
+            <button onclick="insertClueStarter('Pour faire cette activité, il faut...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
+              <span>"Pour faire cette activité, il faut..."</span>
+              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
+            </button>
+
+            <button onclick="insertClueStarter('Je trouve que [Nom] est très suspect car...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-red-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
+              <span>"Je trouve que [Nom] est suspect car..."</span>
+              <i class="fa-solid fa-plus text-slate-600 group-hover:text-red-400"></i>
+            </button>
+
+            <button onclick="insertClueStarter('Je vous jure que je suis un innocent !')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
+              <span>"Je vous jure que je suis un innocent !"</span>
+              <i class="fa-solid fa-plus text-slate-600 group-hover:text-emerald-400"></i>
+            </button>
+
+            <button onclick="insertClueStarter('C\'est un endroit très calme/bruyant où...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
+              <span>"C'est un endroit calme/bruyant où..."</span>
+              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
+            </button>
+
+          </div>
+
+          <!-- Active Speech Playground Box -->
+          <div class="bg-slate-950 border border-indigo-900/50 rounded-xl p-3 space-y-2">
+            <label class="block text-[11px] text-indigo-300 font-semibold uppercase tracking-wider">
+              Votre indice à prononcer à voix haute :
+            </label>
+            <div class="flex items-center gap-2">
+              <input type="text" id="clue-builder-input" placeholder="Choisissez une amorce ou tapez votre phrase..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+              <button onclick="speakCurrentClueInput()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>Écouter</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Players Turn Tracker Cards Grid -->
+        <div id="discussion-players-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+
+      <!-- GAMEPLAY ACTIVE VIEW: VOTING STAGE -->
+      <div id="game-voting-view" class="hidden max-w-2xl mx-auto w-full space-y-6 my-auto py-6">
+        
+        <div class="text-center space-y-2">
+          <span class="px-3 py-1 bg-red-950 text-red-400 border border-red-800 rounded-full text-xs font-bold uppercase tracking-wider">
+            🗳️ Phase d'Accusation
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white">
+            Qui est l'Imposteur selon vous ?
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400">
+            Discutez ensemble puis désignez la personne la plus suspecte !
+          </p>
+        </div>
+
+        <!-- Player Voting List -->
+        <div id="voting-players-container" class="space-y-3">
+          <!-- Injected dynamically -->
+        </div>
+
+        <button onclick="tallyVotesAndReveal()" class="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-bold text-base rounded-2xl shadow-xl shadow-red-600/30 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-gavel"></i> Valider les Votes & Démasquer
+        </button>
+
+      </div>
+
+      <!-- GAMEPLAY ACTIVE VIEW: GAME RESULTS / REVEAL -->
+      <div id="game-results-view" class="hidden max-w-2xl mx-auto w-full space-y-6 my-auto py-6 text-center">
+        
+        <div id="results-banner" class="p-6 rounded-3xl border space-y-4 bg-slate-900">
+          <!-- Dynamically filled with victory/defeat styling -->
+        </div>
+
+        <!-- Reveal details card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left space-y-3 text-xs sm:text-sm">
+          <h4 class="font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center gap-2">
+            <i class="fa-solid fa-file-invoice text-indigo-400"></i> Résumé du Mot Secret
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">Mot pour les Innocents :</span>
+              <span id="res-innocent-word" class="font-bold text-emerald-400 text-base">
+                La cuisine
+              </span>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <span class="text-slate-400 block text-[11px]">L'Imposteur était :</span>
+              <span id="res-impostor-name" class="font-bold text-red-400 text-base">
+                Lucas
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Play Again buttons -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button onclick="restartSameGame()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl shadow transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> Rejouer avec les mêmes élèves
+          </button>
+          <button onclick="backToSetup()" class="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm rounded-xl transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gear"></i> Changer les paramètres
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: SENTENCE STARTERS TOOLKIT (AMORCES DE PHRASES) -->
+    <!-- ========================================================================= -->
+    <section id="tab-starters" class="tab-content hidden flex-1 flex flex-col space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-comment-dots text-purple-400"></i> Amorces de Phrases (Sentence Starters)
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Utilisez ces structures de phrases pour vous exprimer en français pendant le jeu !
+          </p>
+        </div>
+
+        <!-- Filter Categories -->
+        <div class="flex flex-wrap gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button onclick="filterStarters('all')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition">Toutes</button>
+          <button onclick="filterStarters('clues')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Indices</button>
+          <button onclick="filterStarters('questions')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Questions</button>
+          <button onclick="filterStarters('accusations')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Accusations</button>
+          <button onclick="filterStarters('defense')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Défense</button>
+        </div>
+      </div>
+
+      <!-- Sentence Starters Grid -->
+      <div id="starters-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Injected dynamically by JS -->
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: VOCABULARY MATRIX (LES PIÈCES & ACTIVITÉS) -->
+    <!-- ========================================================================= -->
+    <section id="tab-vocab" class="tab-content hidden flex-1 flex flex-col space-y-6">
+      
+      <div class="border-b border-slate-800 pb-4">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-house text-emerald-400"></i> Vocabulaire : Les Pièces & Activités
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">
+          Explorez les noms des pièces, les verbes d'action et les objets associés pour enrichir vos indices.
+        </p>
+      </div>
+
+      <!-- Vocab Grid -->
+      <div id="vocab-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Injected dynamically by JS -->
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: RULES & TEACHER TUTORIAL -->
+    <!-- ========================================================================= -->
+    <section id="tab-rules" class="tab-content hidden flex-1 flex flex-col space-y-6 max-w-4xl mx-auto w-full">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-2xl">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-white">Comment Jouer à "Qui est l'Imposteur ?"</h2>
+            <p class="text-xs text-slate-400">Guide pédagogique pour la classe de français langue étrangère (FLE)</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">1</span>
+            <h3 class="font-bold text-sm text-white">Rejoindre la salle</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Le professeur crée une salle avec le bouton hôte. Chaque élève entre le code à 4 chiffres sur son appareil.
+            </p>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">2</span>
+            <h3 class="font-bold text-sm text-white">Rôle Secret</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Les Innocents reçoivent un mot (ex: <em>La cuisine</em>). L'Imposteur ne voit aucun mot et doit bluffer !
+            </p>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">3</span>
+            <h3 class="font-bold text-sm text-white">Indices & Vote</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Chacun donne un indice oral en français avec l'assistant de phrases. Puis tout le monde vote pour éliminer le suspect.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC ENGINE WITH FIREBASE REALTIME MULTIPLAYER -->
+  <!-- ========================================================================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Initialize Firebase
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'imposteur-house-game';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' 
+      ? JSON.parse(__firebase_config) 
+      : {
+          apiKey: "demo-api-key",
+          authDomain: "demo-app.firebaseapp.com",
+          projectId: "demo-app",
+          storageBucket: "demo-app.appspot.com",
+          messagingSenderId: "123456789",
+          appId: "1:123456789:web:demo"
+        };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let roomUnsubscribe = null;
+
+    function getRoomDocRef(code) {
+      return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code.toString().toUpperCase());
+    }
+
+    async function initAuthentication() {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          const cred = await signInWithCustomToken(auth, __initial_auth_token);
+          currentUser = cred.user;
+        } else {
+          const cred = await signInAnonymously(auth);
+          currentUser = cred.user;
+        }
+      } catch (e) {
+        console.warn("Auth initialization error:", e);
+      }
+    }
+
+    initAuthentication();
+
+    window.createNewOnlineRoom = async function() {
+      if (!currentUser) await initAuthentication();
+      if (!currentUser) {
+        alert("Erreur de connexion. Veuillez réespayer.");
+        return;
+      }
+
+      const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+      gameState.roomCode = roomCode;
+      gameState.isHost = true;
+      gameState.myPlayerName = "Professeur (Hôte)";
+
+      const roomData = {
+        code: roomCode,
+        status: 'LOBBY',
+        hostId: currentUser.uid,
+        topicCategory: gameState.topicCategory,
+        impostorCount: parseInt(document.getElementById('impostor-count-select').value, 10),
+        players: [{
+          id: currentUser.uid,
+          name: gameState.myPlayerName,
+          isHost: true,
+          role: null
+        }],
+        secretRoom: null,
+        secretActivity: null,
+        selectedSuspectIndex: null,
+        createdAt: Date.now()
+      };
+
+      try {
+        await setDoc(getRoomDocRef(roomCode), roomData);
+        listenToRoom(roomCode);
+        showLobbyUI(roomCode, true);
+      } catch (err) {
+        console.error("Error creating room:", err);
+      }
+    };
+
+    window.joinRoomByCode = async function() {
+      if (!currentUser) await initAuthentication();
+      const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
+      const nameInput = document.getElementById('join-name-input').value.trim();
+
+      if (!codeInput || codeInput.length !== 4) {
+        alert("Veuillez entrer un code à 4 chiffres valide.");
+        return;
+      }
+      if (!nameInput) {
+        alert("Veuillez entrer votre prénom.");
+        return;
+      }
+
+      gameState.roomCode = codeInput;
+      gameState.isHost = false;
+      gameState.myPlayerName = nameInput;
+
+      const roomRef = getRoomDocRef(codeInput);
+      try {
+        const snap = await getDoc(roomRef);
+        if (!snap.exists()) {
+          alert("Code de salle introuvable ! Vérifiez le code avec votre professeur.");
+          return;
+        }
+
+        const roomData = snap.data();
+        if (roomData.status !== 'LOBBY') {
+          alert("La partie a déjà commencé dans cette salle.");
+          return;
+        }
+
+        const updatedPlayers = roomData.players || [];
+        if (!updatedPlayers.some(p => p.id === currentUser.uid)) {
+          updatedPlayers.push({
+            id: currentUser.uid,
+            name: nameInput,
+            isHost: false,
+            role: null
+          });
+          await updateDoc(roomRef, { players: updatedPlayers });
+        }
+
+        listenToRoom(codeInput);
+        showLobbyUI(codeInput, false);
+      } catch (err) {
+        console.error("Error joining room:", err);
+        alert("Impossible de rejoindre la salle.");
+      }
+    };
+
+    function listenToRoom(code) {
+      if (roomUnsubscribe) roomUnsubscribe();
+
+      const roomRef = getRoomDocRef(code);
+      roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+        const data = snapshot.data();
+        syncGameStateFromFirebase(data);
+      }, (error) => {
+        console.error("Room snapshot error:", error);
+      });
+    }
+
+    function syncGameStateFromFirebase(data) {
+      gameState.playerNames = (data.players || []).map(p => p.name);
+      gameState.impostorCount = data.impostorCount || 1;
+
+      const countEl = document.getElementById('lobby-player-count');
+      if (countEl) countEl.innerText = data.players.length;
+
+      const grid = document.getElementById('lobby-players-grid');
+      if (grid) {
+        grid.innerHTML = (data.players || []).map(p => `
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+            <span class="font-bold text-white truncate">${p.name}</span>
+            ${p.isHost ? '<span class="text-[9px] bg-indigo-900 text-indigo-300 px-1.5 py-0.5 rounded">Hôte</span>' : '✅'}
+          </div>
+        `).join('');
+      }
+
+      if (data.status === 'REVEAL') {
+        gameState.secretRoom = data.secretRoom;
+        gameState.secretActivity = data.secretActivity;
+        
+        const me = (data.players || []).find(p => p.id === (currentUser ? currentUser.uid : ''));
+        const isImpostor = me ? me.role === 'impostor' : false;
+
+        document.getElementById('game-lobby-view').classList.add('hidden');
+        document.getElementById('game-reveal-view').classList.remove('hidden');
+
+        document.getElementById('reveal-player-name').innerText = gameState.myPlayerName;
+        document.getElementById('card-back-player-title').innerText = gameState.myPlayerName;
+
+        const roleBox = document.getElementById('role-display-content');
+        if (isImpostor) {
+          roleBox.innerHTML = `
+            <div class="space-y-2">
+              <span class="text-5xl">🕵️</span>
+              <h4 class="text-2xl font-black text-red-500 tracking-wide">TU ES L'IMPOSTEUR !</h4>
+              <p class="text-xs text-slate-300">
+                Tu n'as pas le mot secret. Écoute les indices des autres élèves et fais semblant de connaître la pièce !
+              </p>
+            </div>
+          `;
+        } else {
+          roleBox.innerHTML = `
+            <div class="space-y-3">
+              <span class="text-5xl">${gameState.secretRoom.icon}</span>
+              <div>
+                <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Tu es Innocent • Ton Mot Secret :</span>
+                <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom.name}</h4>
+                <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity}</span></p>
+              </div>
+            </div>
+          `;
+        }
+      } else if (data.status === 'DISCUSSION') {
+        document.getElementById('game-reveal-view').classList.add('hidden');
+        document.getElementById('game-discussion-view').classList.remove('hidden');
+        renderDiscussionPlayers();
+      } else if (data.status === 'VOTING') {
+        document.getElementById('game-discussion-view').classList.add('hidden');
+        document.getElementById('game-voting-view').classList.remove('hidden');
+        renderOnlineVotingPlayers();
+      } else if (data.status === 'RESULTS') {
+        gameState.selectedSuspectIndex = data.selectedSuspectIndex;
+        document.getElementById('game-voting-view').classList.add('hidden');
+        document.getElementById('game-results-view').classList.remove('hidden');
+        renderResultsView(data);
+      }
+    }
+
+    window.startOnlineGameHost = async function() {
+      if (!gameState.roomCode) return;
+      const roomRef = getRoomDocRef(gameState.roomCode);
+      const snap = await getDoc(roomRef);
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+      const players = data.players || [];
+      if (players.length < 3) {
+        alert("Il faut au moins 3 joueurs pour démarrer !");
+        return;
+      }
+
+      const randomRoom = ROOMS_DATA[Math.floor(Math.random() * ROOMS_DATA.length)];
+      const randomActivity = randomRoom.activities[Math.floor(Math.random() * randomRoom.activities.length)];
+
+      const playerIndices = Array.from({ length: players.length }, (_, i) => i);
+      for (let i = playerIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playerIndices[i], playerIndices[j]] = [playerIndices[j], playerIndices[i]];
+      }
+      const impostorIndices = playerIndices.slice(0, data.impostorCount);
+
+      const assignedPlayers = players.map((p, idx) => ({
+        ...p,
+        role: impostorIndices.includes(idx) ? 'impostor' : 'innocent'
+      }));
+
+      await updateDoc(roomRef, {
+        status: 'REVEAL',
+        secretRoom: randomRoom,
+        secretActivity: randomActivity,
+        players: assignedPlayers
+      });
+    };
+
+    window.proceedToDiscussion = async function() {
+      if (gameState.isHost && gameState.roomCode) {
+        await updateDoc(getRoomDocRef(gameState.roomCode), { status: 'DISCUSSION' });
+      } else {
+        document.getElementById('game-reveal-view').classList.add('hidden');
+        document.getElementById('game-discussion-view').classList.remove('hidden');
+        renderDiscussionPlayers();
+      }
+    };
+
+    window.goToVotingStage = async function() {
+      if (gameState.isHost && gameState.roomCode) {
+        await updateDoc(getRoomDocRef(gameState.roomCode), { status: 'VOTING' });
+      } else {
+        document.getElementById('game-discussion-view').classList.add('hidden');
+        document.getElementById('game-voting-view').classList.remove('hidden');
+        renderOnlineVotingPlayers();
+      }
+    };
+
+    function renderOnlineVotingPlayers() {
+      const container = document.getElementById('voting-players-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      gameState.playerNames.forEach((name, idx) => {
+        const row = document.createElement('div');
+        row.className = 'bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between';
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">
+              ${idx + 1}
+            </span>
+            <span class="font-bold text-sm text-white">${name}</span>
+          </div>
+          <button onclick="castVoteForPlayer(${idx}, this)" class="vote-target-btn py-1.5 px-4 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:border-red-500 hover:text-white transition">
+            <i class="fa-solid fa-bullseye"></i> Suspecter
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    window.tallyVotesAndReveal = async function() {
+      const suspectIdx = gameState.selectedSuspectIndex !== undefined ? gameState.selectedSuspectIndex : 0;
+      if (gameState.isHost && gameState.roomCode) {
+        await updateDoc(getRoomDocRef(gameState.roomCode), {
+          status: 'RESULTS',
+          selectedSuspectIndex: suspectIdx
+        });
+      } else {
+        renderResultsView();
+      }
+    };
+
+    function renderResultsView(data = null) {
+      const suspectIdx = gameState.selectedSuspectIndex !== undefined ? gameState.selectedSuspectIndex : 0;
+      const suspectName = gameState.playerNames[suspectIdx] || "Un élève";
+
+      const roomRef = data || gameState;
+      const innocentWord = roomRef.secretRoom ? `${roomRef.secretRoom.name} (${roomRef.secretActivity})` : "La cuisine";
+
+      const banner = document.getElementById('results-banner');
+      if (banner) {
+        banner.className = 'p-6 rounded-3xl border border-indigo-500/50 bg-indigo-950/40 space-y-3';
+        banner.innerHTML = `
+          <div class="text-5xl">🔍</div>
+          <h3 class="text-2xl font-black text-white">FIN DE LA PARTIE</h3>
+          <p class="text-xs text-slate-200">
+            Vous avez accusé <strong>${suspectName}</strong> !
+          </p>
+        `;
+      }
+
+      const resInnocentWord = document.getElementById('res-innocent-word');
+      const resImpostorName = document.getElementById('res-impostor-name');
+      if (resInnocentWord) resInnocentWord.innerText = innocentWord;
+      if (resImpostorName) resImpostorName.innerText = "Révélé dans la salle !";
+    }
+
+    function showLobbyUI(code, isHost) {
+      document.getElementById('game-setup-view').classList.add('hidden');
+      document.getElementById('game-lobby-view').classList.remove('hidden');
+
+      document.getElementById('room-code-badge').classList.remove('hidden');
+      document.getElementById('active-room-display').innerText = code;
+      document.getElementById('lobby-code-display').innerText = code;
+
+      if (isHost) {
+        document.getElementById('host-start-btn').classList.remove('hidden');
+        document.getElementById('host-start-btn').classList.add('flex');
+        document.getElementById('student-waiting-notice').classList.add('hidden');
+      } else {
+        document.getElementById('host-start-btn').classList.add('hidden');
+        document.getElementById('student-waiting-notice').classList.remove('hidden');
+      }
+    }
+  </script>
+
+  <!-- Vocabulary & Game Data Helper Scripts -->
+  <script>
+    const ROOMS_DATA = [
+      {
+        id: 'cuisine',
+        name: 'La cuisine',
+        translation: 'The kitchen',
+        icon: '🍳',
+        activities: ['cuisiner', 'préparer le repas', 'faire la vaisselle', 'cuire un gâteau', 'manger un en-cas'],
+        items: ['le four', 'le réfrigérateur', 'les casseroles', 'l\'évier'],
+        clueExamples: [
+          'On y trouve souvent de la nourriture et un four.',
+          'C\'est un endroit chaud où on prépare le dîner.',
+          'J\'y vais plusieurs fois par jour quand j\'ai faim.'
+        ]
+      },
+      {
+        id: 'chambre',
+        name: 'La chambre',
+        translation: 'The bedroom',
+        icon: '🛏️',
+        activities: ['dormir', 'faire son lit', 'ranger ses vêtements', 'lire un livre', 'se reposer'],
+        items: ['le lit', 'l\'armoire', 'l\'oreiller', 'la lampe de chevet'],
+        clueExamples: [
+          'C\'est une pièce très calme où il y a un lit.',
+          'On y va d\'habitude le soir pour se reposer.',
+          'C\'est mon endroit préféré pour lire un livre en paix.'
+        ]
+      },
+      {
+        id: 'salle_de_bains',
+        name: 'La salle de bains',
+        translation: 'The bathroom',
+        icon: '🚿',
+        activities: ['se laver les mains', 'prendre une douche', 'se brosser les dents', 'se coiffer'],
+        items: ['la douche', 'le savon', 'la serviette', 'le miroir'],
+        clueExamples: [
+          'Il y a de l\'eau, du savon et un grand miroir.',
+          'On y passe du temps le matin pour se préparer.',
+          'C\'est là qu\'on se brosse les dents.'
+        ]
+      },
+      {
+        id: 'salon',
+        name: 'Le salon',
+        translation: 'The living room',
+        icon: '🛋️',
+        activities: ['regarder la télévision', 'se détendre sur le canapé', 'écouter de la musique', 'discuter en famille'],
+        items: ['le canapé', 'la télévision', 'la table basse', 'le fauteuil'],
+        clueExamples: [
+          'C\'est une pièce confortable avec un grand canapé.',
+          'Toute la famille s\'y réunit pour regarder un film.',
+          'On s\'y détend après une longue journée.'
+        ]
+      },
+      {
+        id: 'salle_a_manger',
+        name: 'La salle à manger',
+        translation: 'The dining room',
+        icon: '🍽️',
+        activities: ['manger le dîner', 'mettre la table', 'débarrasser les assiettes', 'fêter un anniversaire'],
+        items: ['la grande table', 'les chaises', 'la vaisselle', 'la nappe'],
+        clueExamples: [
+          'On s\'assoit autour d\'une table pour partager le repas.',
+          'On y met la table avant de manger ensemble.',
+          'C\'est la pièce officielle pour les repas de fête.'
+        ]
+      },
+      {
+        id: 'jardin',
+        name: 'Le jardin',
+        translation: 'The garden / yard',
+        icon: '🌳',
+        activities: ['jouer au ballon', 'planter des fleurs', 'arroser les plantes', 'faire un barbecue'],
+        items: ['l\'herbe', 'les fleurs', 'l\'arrosoir', 'les arbres'],
+        clueExamples: [
+          'C\'est un espace extérieur avec de l\'herbe et des plantes.',
+          'J\'aime y jouer au ballon quand il fait beau.',
+          'On y entend souvent chanter les oiseaux.'
+        ]
+      },
+      {
+        id: 'garage',
+        name: 'Le garage',
+        translation: 'The garage',
+        icon: '🚗',
+        activities: ['garer la voiture', 'réparer un vélo', 'ranger des outils', 'bricoler'],
+        items: ['la voiture', 'les outils', 'le vélo', 'les cartons'],
+        clueExamples: [
+          'On y garde la voiture et des outils de bricolage.',
+          'C\'est souvent un endroit un peu sombre et frais.',
+          'J\'y mets mon vélo quand je rentre de l\'école.'
+        ]
+      },
+      {
+        id: 'bureau',
+        name: 'Le bureau',
+        translation: 'The study / office',
+        icon: '💻',
+        activities: ['faire ses devoirs', 'travailler sur l\'ordinateur', 'écrire une lettre', 'étudier'],
+        items: ['l\'ordinateur', 'la chaise de bureau', 'les crayons', 'les livres'],
+        clueExamples: [
+          'On y trouve un ordinateur et des livres pour étudier.',
+          'C\'est là qu\'on fait ses devoirs en toute tranquillité.',
+          'Il y a beaucoup de stylos et de papier ici.'
+        ]
+      }
+    ];
+
+    const SENTENCE_STARTERS = [
+      {
+        id: 1,
+        category: 'clues',
+        categoryLabel: 'Indice (Giving Clue)',
+        french: "Dans cette pièce, d'habitude on...",
+        english: "In this room, usually we...",
+        type: 'ind'
+      },
+      {
+        id: 2,
+        category: 'clues',
+        categoryLabel: 'Indice (Giving Clue)',
+        french: "On y trouve souvent du/de la/des...",
+        english: "We often find ... here.",
+        type: 'ind'
+      },
+      {
+        id: 3,
+        category: 'clues',
+        categoryLabel: 'Indice (Giving Clue)',
+        french: "C'est un endroit parfait pour...",
+        english: "It's a perfect place to...",
+        type: 'ind'
+      },
+      {
+        id: 4,
+        category: 'clues',
+        categoryLabel: 'Indice (Giving Clue)',
+        french: "Pour faire cette activité, on utilise...",
+        english: "To do this activity, we use...",
+        type: 'ind'
+      },
+      {
+        id: 5,
+        category: 'questions',
+        categoryLabel: 'Question (Asking)',
+        french: "Est-ce qu'on utilise de l'eau dans cet endroit ?",
+        english: "Do we use water in this place?",
+        type: 'que'
+      },
+      {
+        id: 6,
+        category: 'questions',
+        categoryLabel: 'Question (Asking)',
+        french: "Est-ce qu'on y va plutôt le matin ou le soir ?",
+        english: "Do we go there in the morning or evening?",
+        type: 'que'
+      },
+      {
+        id: 7,
+        category: 'accusations',
+        categoryLabel: 'Accusation (Accusing)',
+        french: "Je trouve que [Nom] est suspect parce que...",
+        english: "I think [Name] is suspicious because...",
+        type: 'acc'
+      },
+      {
+        id: 8,
+        category: 'accusations',
+        categoryLabel: 'Accusation (Accusing)',
+        french: "Ton indice est trop vague / bizarre !",
+        english: "Your clue is too vague / weird!",
+        type: 'acc'
+      },
+      {
+        id: 9,
+        category: 'defense',
+        categoryLabel: 'Défense (Defending)',
+        french: "Je vous jure que je suis un vrai innocent !",
+        english: "I swear I am a real innocent!",
+        type: 'def'
+      },
+      {
+        id: 10,
+        category: 'defense',
+        categoryLabel: 'Défense (Defending)',
+        french: "J'ai dit ça parce que dans ma maison...",
+        english: "I said that because in my house...",
+        type: 'def'
+      }
+    ];
+
+    let gameState = {
+      mode: 'group',
+      topicCategory: 'rooms',
+      playerNames: ['Pierre', 'Sophie', 'Thomas', 'Lucas'],
+      impostorCount: 1,
+      secretRoom: null,
+      secretActivity: null,
+      impostorIndices: [],
+      currentRevealIndex: 0,
+      votes: {}
+    };
+
+    let audioEnabled = true;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderPlayerInputFields(4);
+      renderStartersGrid();
+      renderVocabCards();
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn, .mob-nav-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'text-indigo-400');
+        btn.classList.add('text-slate-300', 'text-slate-400');
+      });
+
+      const activeTab = document.getElementById(`tab-${tabId}`);
+      if (activeTab) activeTab.classList.remove('hidden');
+
+      const desktopNavBtn = document.getElementById(`nav-${tabId}`);
+      if (desktopNavBtn) {
+        desktopNavBtn.classList.add('bg-indigo-600', 'text-white');
+        desktopNavBtn.classList.remove('text-slate-300');
+      }
+
+      const mobNavBtn = document.getElementById(`nav-mob-${tabId}`);
+      if (mobNavBtn) {
+        mobNavBtn.classList.add('text-indigo-400');
+        mobNavBtn.classList.remove('text-slate-400');
+      }
+    }
+
+    function toggleAudioEngine() {
+      audioEnabled = !audioEnabled;
+      const icon = document.getElementById('audio-icon');
+      const label = document.getElementById('audio-status-label');
+      if (audioEnabled) {
+        if (icon) icon.className = 'fa-solid fa-volume-high text-emerald-400';
+        if (label) label.innerText = 'Audio: ON';
+      } else {
+        if (icon) icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+        if (label) label.innerText = 'Audio: OFF';
+      }
+    }
+
+    function speakFrenchText(text) {
+      if (!audioEnabled || !text) return;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-FR';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function selectGameMode(mode) {
+      gameState.mode = mode;
+      const studentBox = document.getElementById('student-join-box');
+      const hostBox = document.getElementById('host-config-box');
+      if (studentBox) studentBox.classList.add('hidden');
+      if (hostBox) hostBox.classList.add('hidden');
+
+      if (mode === 'join') {
+        if (studentBox) studentBox.classList.remove('hidden');
+      } else if (mode === 'host') {
+        if (hostBox) hostBox.classList.remove('hidden');
+      } else {
+        gameState.playerNames = ['Vous (Joueur)', 'Madame Claire (IA)', 'Antoine (IA)', 'Élodie (IA)'];
+        gameState.impostorCount = 1;
+        startGroupGame();
+      }
+    }
+
+    function cancelSetup() {
+      const studentBox = document.getElementById('student-join-box');
+      const hostBox = document.getElementById('host-config-box');
+      if (studentBox) studentBox.classList.add('hidden');
+      if (hostBox) hostBox.classList.add('hidden');
+    }
+
+    function setTopicCategory(cat) {
+      gameState.topicCategory = cat;
+      document.querySelectorAll('.topic-btn').forEach(btn => {
+        btn.classList.remove('border-indigo-500', 'bg-indigo-950/60', 'text-indigo-200');
+        btn.classList.add('border-slate-800', 'bg-slate-950', 'text-slate-400');
+      });
+      const activeBtn = document.getElementById(`topic-${cat}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('border-slate-800', 'bg-slate-950', 'text-slate-400');
+        activeBtn.classList.add('border-indigo-500', 'bg-indigo-950/60', 'text-indigo-200');
+      }
+    }
+
+    function renderPlayerInputFields(count) {
+      const container = document.getElementById('player-names-container');
+      if (!container) return; // Defensive null guard
+      container.innerHTML = '';
+      const defaultNames = ['Pierre', 'Sophie', 'Thomas', 'Lucas', 'Chloé', 'Manon', 'Hugo', 'Camille'];
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'player-name-input bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500';
+        input.value = defaultNames[i] || `Élève ${i + 1}`;
+        container.appendChild(input);
+      }
+    }
+
+    function startGroupGame() {
+      const randomIndex = Math.floor(Math.random() * ROOMS_DATA.length);
+      gameState.secretRoom = ROOMS_DATA[randomIndex];
+      const randomActIdx = Math.floor(Math.random() * gameState.secretRoom.activities.length);
+      gameState.secretActivity = gameState.secretRoom.activities[randomActIdx];
+
+      const totalPlayers = gameState.playerNames.length;
+      const indices = Array.from({ length: totalPlayers }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      gameState.impostorIndices = indices.slice(0, gameState.impostorCount);
+      gameState.currentRevealIndex = 0;
+
+      document.getElementById('game-setup-view').classList.add('hidden');
+      document.getElementById('game-reveal-view').classList.remove('hidden');
+
+      updateCardRevealUI();
+    }
+
+    function updateCardRevealUI() {
+      const total = gameState.playerNames.length;
+      const idx = gameState.currentRevealIndex;
+
+      document.getElementById('reveal-progress-label').innerText = `Élève ${idx + 1} sur ${total}`;
+      document.getElementById('reveal-player-name').innerText = gameState.playerNames[idx];
+      document.getElementById('card-back-player-title').innerText = gameState.playerNames[idx];
+
+      const cardContainer = document.getElementById('secret-card-container');
+      cardContainer.classList.remove('flipped');
+
+      const isImpostor = gameState.impostorIndices.includes(idx);
+      const roleBox = document.getElementById('role-display-content');
+
+      if (isImpostor) {
+        roleBox.innerHTML = `
+          <div class="space-y-2">
+            <span class="text-5xl">🕵️</span>
+            <h4 class="text-2xl font-black text-red-500 tracking-wide">TU ES L'IMPOSTEUR !</h4>
+            <p class="text-xs text-slate-300">
+              Tu n'as pas le mot secret. Écoute les indices des autres et fais semblant de connaître la pièce !
+            </p>
+          </div>
+        `;
+      } else {
+        roleBox.innerHTML = `
+          <div class="space-y-3">
+            <span class="text-5xl">${gameState.secretRoom.icon}</span>
+            <div>
+              <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Tu es Innocent • Ton Mot Secret :</span>
+              <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom.name}</h4>
+              <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity}</span></p>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function toggleCardFlip() {
+      const cardContainer = document.getElementById('secret-card-container');
+      if (cardContainer) cardContainer.classList.toggle('flipped');
+    }
+
+    function renderDiscussionPlayers() {
+      const container = document.getElementById('discussion-players-grid');
+      if (!container) return;
+      container.innerHTML = '';
+
+      gameState.playerNames.forEach((name, idx) => {
+        const div = document.createElement('div');
+        div.className = 'bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center text-center space-y-2';
+        div.innerHTML = `
+          <div class="w-10 h-10 rounded-full bg-indigo-900/50 border border-indigo-700/60 flex items-center justify-center font-bold text-white text-sm">
+            ${idx + 1}
+          </div>
+          <div>
+            <div class="font-bold text-xs text-white">${name}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Élève ${idx + 1}</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function insertClueStarter(text) {
+      const input = document.getElementById('clue-builder-input');
+      if (input) input.value = text;
+      speakFrenchText(text);
+    }
+
+    function speakCurrentClueInput() {
+      const input = document.getElementById('clue-builder-input');
+      if (input) speakFrenchText(input.value);
+    }
+
+    function castVoteForPlayer(playerIdx, btn) {
+      document.querySelectorAll('.vote-target-btn').forEach(b => {
+        b.className = 'vote-target-btn py-1.5 px-4 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:border-red-500 hover:text-white transition';
+        b.innerHTML = '<i class="fa-solid fa-bullseye"></i> Suspecter';
+      });
+
+      btn.className = 'vote-target-btn py-1.5 px-4 rounded-lg bg-red-600 text-white font-bold text-xs shadow';
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Désigné comme Imposteur';
+      gameState.selectedSuspectIndex = playerIdx;
+    }
+
+    function restartSameGame() {
+      document.getElementById('game-results-view').classList.add('hidden');
+      startGroupGame();
+    }
+
+    function backToSetup() {
+      document.getElementById('game-results-view').classList.add('hidden');
+      document.getElementById('game-setup-view').classList.remove('hidden');
+    }
+
+    function renderStartersGrid(filter = 'all') {
+      const container = document.getElementById('starters-container');
+      if (!container) return; // Defensive null guard
+      container.innerHTML = '';
+
+      const filtered = filter === 'all' 
+        ? SENTENCE_STARTERS 
+        : SENTENCE_STARTERS.filter(s => s.category === filter);
+
+      filtered.forEach(starter => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-4 transition shadow-md flex flex-col justify-between space-y-3';
+        
+        card.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-purple-300 uppercase">
+                ${starter.categoryLabel}
+              </span>
+              <button onclick="speakFrenchText('${starter.french.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-full bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white flex items-center justify-center transition">
+                <i class="fa-solid fa-volume-high text-xs"></i>
+              </button>
+            </div>
+            <p class="text-sm font-bold text-white leading-snug">"${starter.french}"</p>
+            <p class="text-xs text-slate-400 italic">${starter.english}</p>
+          </div>
+          <button onclick="insertClueStarter('${starter.french.replace(/'/g, "\\'")}'); switchTab('game');" class="w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-indigo-500 transition text-center font-medium">
+            Utiliser dans la partie &rarr;
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterStarters(category) {
+      document.querySelectorAll('.starter-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-purple-600', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      if (event && event.target) {
+        event.target.classList.remove('bg-slate-800', 'text-slate-300');
+        event.target.classList.add('bg-purple-600', 'text-white');
+      }
+      renderStartersGrid(category);
+    }
+
+    function renderVocabCards() {
+      const container = document.getElementById('vocab-cards-grid');
+      if (!container) return; // Defensive null guard
+      container.innerHTML = '';
+
+      ROOMS_DATA.forEach(room => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 hover:border-emerald-500/40 transition shadow-lg';
+        
+        const activitiesList = room.activities.map(act => `<li class="flex items-center gap-2"><span class="text-emerald-400">•</span> ${act}</li>`).join('');
+        const itemsList = room.items.map(it => `<span class="bg-slate-950 text-slate-300 text-[10px] px-2 py-1 rounded border border-slate-800">${it}</span>`).join(' ');
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">${room.icon}</span>
+              <div>
+                <h3 class="font-bold text-base text-white">${room.name}</h3>
+                <span class="text-xs text-slate-400 italic">${room.translation}</span>
+              </div>
+            </div>
+            <button onclick="speakFrenchText('${room.name}')" class="p-2 rounded-lg bg-slate-800 text-emerald-400 hover:bg-emerald-600 hover:text-white transition">
+              <i class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+          </div>
+
+          <div class="space-y-1">
+            <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">Activités (Verbes & Actions) :</span>
+            <ul class="text-xs text-slate-300 space-y-1 pl-1">
+              ${activitiesList}
+            </ul>
+          </div>
+
+          <div class="space-y-1 pt-2 border-t border-slate-800">
+            <span class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider block">Objets & Meubles :</span>
+            <div class="flex flex-wrap gap-1 mt-1">
+              ${itemsList}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Expose helpers globally
+    window.switchTab = switchTab;
+    window.toggleAudioEngine = toggleAudioEngine;
+    window.speakFrenchText = speakFrenchText;
+    window.selectGameMode = selectGameMode;
+    window.cancelSetup = cancelSetup;
+    window.setTopicCategory = setTopicCategory;
+    window.toggleCardFlip = toggleCardFlip;
+    window.insertClueStarter = insertClueStarter;
+    window.speakCurrentClueInput = speakCurrentClueInput;
+    window.castVoteForPlayer = castVoteForPlayer;
+    window.restartSameGame = restartSameGame;
+    window.backToSetup = backToSetup;
+    window.filterStarters = filterStarters;
+  </script>
+</body>
+</html>
