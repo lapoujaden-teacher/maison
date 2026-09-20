@@ -153,529 +153,7 @@
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
 
     <!-- ========================================================================= -->
-    <!-- TAB 1: GAME SCREEN (ROOM CODE MULTIPLAYER + SOLO VS AI) -->
-    <!-- ========================================================================= -->
-    <section id="tab-game" class="tab-content flex-1 flex flex-col">
-      
-      <!-- Game Mode Selection Header -->
-      <div id="game-setup-view" class="max-w-3xl mx-auto w-full space-y-6 my-auto py-4">
-        
-        <!-- Welcome Hero -->
-        <div class="text-center space-y-3">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-700/50 text-indigo-300 text-xs font-semibold">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Multijoueur en Direct • Rejoignez avec un Code Salle
-          </div>
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">
-            Trouvez l'Imposteur dans la Maison !
-          </h2>
-          <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
-            Chaque élève rejoint la partie depuis son propre écran avec le code. L'Imposteur doit deviner le mot en observant vos indices !
-          </p>
-        </div>
-
-        <!-- Mode Cards Selection -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          <!-- Mode 1: Join via Room Code (For Students) -->
-          <div onclick="selectGameMode('join')" class="cursor-pointer group relative bg-slate-900/90 border-2 border-emerald-600/60 hover:border-emerald-400 rounded-2xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/20 flex flex-col justify-between">
-            <div class="space-y-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl group-hover:scale-110 transition">
-                <i class="fa-solid fa-key"></i>
-              </div>
-              <div>
-                <h3 class="text-lg font-bold text-white flex items-center justify-between">
-                  <span>Rejoindre une Salle</span>
-                </h3>
-                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                  Vous êtes élève ? Entrez le code à 4 chiffres donné par votre professeur pour rejoindre.
-                </p>
-              </div>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-emerald-400 font-bold text-xs">
-              <span>Entrer le code &rarr;</span>
-            </div>
-          </div>
-
-          <!-- Mode 2: Host Room Code (For Teacher) -->
-          <div onclick="selectGameMode('host')" class="cursor-pointer group relative bg-slate-900/90 border-2 border-indigo-600/60 hover:border-indigo-400 rounded-2xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/20 flex flex-col justify-between">
-            <div class="space-y-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xl group-hover:scale-110 transition">
-                <i class="fa-solid fa-chalkboard-user"></i>
-              </div>
-              <div>
-                <h3 class="text-lg font-bold text-white flex items-center justify-between">
-                  <span>Créer une Salle (Prof)</span>
-                </h3>
-                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                  Générez un code de salle en direct pour votre classe et suivez la partie sur grand écran.
-                </p>
-              </div>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-indigo-400 font-bold text-xs">
-              <span>Générer un code &rarr;</span>
-            </div>
-          </div>
-
-          <!-- Mode 3: Solo vs AI Classmates -->
-          <div onclick="selectGameMode('solo')" class="cursor-pointer group relative bg-slate-900/90 border-2 border-purple-600/60 hover:border-purple-400 rounded-2xl p-5 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 flex flex-col justify-between">
-            <div class="space-y-3">
-              <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl group-hover:scale-110 transition">
-                <i class="fa-solid fa-robot"></i>
-              </div>
-              <div>
-                <h3 class="text-lg font-bold text-white flex items-center justify-between">
-                  <span>Mode Solo vs IA</span>
-                </h3>
-                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                  S'entraîner seul(e) avec des camarades virtuels intelligents.
-                </p>
-              </div>
-            </div>
-            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-purple-400 font-bold text-xs">
-              <span>Jouer solo &rarr;</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- STUDENT JOIN BOX -->
-        <div id="student-join-box" class="hidden bg-slate-900/95 border border-emerald-500/40 rounded-2xl p-6 space-y-4 shadow-2xl">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-right-to-bracket text-emerald-400"></i> Rejoindre la Salle de Classe
-            </h3>
-            <button onclick="cancelSetup()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800">Annuler</button>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Code de Salle (Room Code)</label>
-              <input type="text" id="join-code-input" maxlength="4" placeholder="ex: 4829" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono uppercase tracking-widest text-emerald-400 font-bold focus:outline-none focus:border-emerald-500">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Votre Prénom (Your Name)</label>
-              <input type="text" id="join-name-input" placeholder="ex: Thomas" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-            </div>
-          </div>
-          <button onclick="joinRoomByCode()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-paper-plane"></i> Entrer dans la Salle
-          </button>
-        </div>
-
-        <!-- HOST / TEACHER CREATION BOX -->
-        <div id="host-config-box" class="hidden bg-slate-900/95 border border-indigo-500/40 rounded-2xl p-6 space-y-6 shadow-2xl">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-sliders text-indigo-400"></i> Configuration de la Salle Multi-Écrans
-            </h3>
-            <button onclick="cancelSetup()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800">Annuler</button>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-2 uppercase tracking-wider">1. Thème du Vocabulaire</label>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button type="button" onclick="setTopicCategory('rooms')" id="topic-rooms" class="topic-btn p-3 rounded-xl border border-indigo-500 bg-indigo-950/60 text-indigo-200 text-xs font-bold text-left flex items-center gap-3">
-                <span class="text-xl">🏠</span>
-                <div>
-                  <div>Les Pièces uniquement</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Rooms</div>
-                </div>
-              </button>
-              <button type="button" onclick="setTopicCategory('activities')" id="topic-activities" class="topic-btn p-3 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 text-xs font-bold text-left flex items-center gap-3 hover:border-slate-700">
-                <span class="text-xl">🍳</span>
-                <div>
-                  <div>Les Activités uniquement</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Actions</div>
-                </div>
-              </button>
-              <button type="button" onclick="setTopicCategory('both')" id="topic-both" class="topic-btn p-3 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 text-xs font-bold text-left flex items-center gap-3 hover:border-slate-700">
-                <span class="text-xl">🎯</span>
-                <div>
-                  <div>Mélange Pièce + Activité</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Full Combo</div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-2 uppercase tracking-wider">2. Nombre d'Imposteurs</label>
-            <select id="impostor-count-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
-              <option value="1" selected>1 Imposteur</option>
-              <option value="2">2 Imposteurs (pour 6+ élèves)</option>
-            </select>
-          </div>
-
-          <button onclick="createNewOnlineRoom()" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-base shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Créer la Salle & Obtenir le Code
-          </button>
-        </div>
-
-        <!-- Sentence Starter Quick Drawer Toggle -->
-        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-slate-300">
-          <span class="flex items-center gap-2">
-            <i class="fa-solid fa-lightbulb text-amber-400"></i> Besoin d'aide pour parler pendant la partie ?
-          </span>
-          <button onclick="switchTab('starters')" class="text-indigo-400 font-bold hover:underline">
-            Voir les amorces de phrases &rarr;
-          </button>
-        </div>
-
-      </div>
-
-      <!-- ROOM LOBBY VIEW (WAITING FOR PLAYERS) -->
-      <div id="game-lobby-view" class="hidden max-w-xl mx-auto w-full my-auto space-y-6 py-6 text-center">
-        <div class="bg-slate-900 border border-indigo-500/40 rounded-3xl p-6 space-y-4 shadow-2xl">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950 text-indigo-300 text-xs font-bold">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            Salle Ouverte
-          </div>
-          <h2 class="text-xl font-bold text-slate-300">Code de Salle pour les Élèves :</h2>
-          <div id="lobby-code-display" class="text-5xl sm:text-6xl font-black font-mono tracking-widest text-emerald-400 bg-slate-950 py-4 px-6 rounded-2xl border border-slate-800 inline-block shadow-inner">
-            ----
-          </div>
-          <p class="text-xs text-slate-400">
-            Dites aux élèves d'aller sur l'application et de cliquer sur <strong>"Rejoindre une Salle"</strong> avec ce code.
-          </p>
-
-          <!-- Connected Players List -->
-          <div class="pt-4 border-t border-slate-800 text-left space-y-3">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-300">
-              <span>Élèves connectés (<span id="lobby-player-count">0</span>) :</span>
-              <span class="text-indigo-400 animate-pulse">En attente...</span>
-            </div>
-            <div id="lobby-players-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-1">
-              <!-- Dynamically filled -->
-            </div>
-          </div>
-
-          <!-- Host Launch Button -->
-          <button id="host-start-btn" onclick="startOnlineGameHost()" class="hidden w-full py-3.5 bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold text-base rounded-xl shadow-xl transition items-center justify-center gap-2">
-            <i class="fa-solid fa-play"></i> Lancer la Partie Maintenant !
-          </button>
-          <div id="student-waiting-notice" class="hidden text-xs text-amber-300 bg-amber-950/40 p-3 rounded-xl border border-amber-800/60">
-            ⏳ Le professeur va bientôt lancer la partie... Gardez cet écran ouvert !
-          </div>
-        </div>
-      </div>
-
-      <!-- GAMEPLAY ACTIVE VIEW: MULTI-DEVICE PERSONAL REVEAL -->
-      <div id="game-reveal-view" class="hidden max-w-xl mx-auto w-full my-auto space-y-6 py-6">
-        
-        <div class="flex items-center justify-between text-sm text-slate-400 bg-slate-900 p-3 rounded-xl border border-slate-800">
-          <span id="reveal-progress-label">Votre Écran Personnel</span>
-          <span class="text-xs bg-slate-800 text-emerald-400 px-2 py-0.5 rounded font-mono">🔒 Confidentialité Active</span>
-        </div>
-
-        <!-- Secret Card Container -->
-        <div class="card-flip w-full h-80 cursor-pointer" id="secret-card-container" onclick="toggleCardFlip()">
-          <div class="card-inner relative w-full h-full rounded-2xl shadow-2xl border-2 border-indigo-500/50">
-            
-            <!-- Card Front (Hidden State) -->
-            <div class="card-front absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-4">
-              <div class="w-20 h-20 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-4xl text-indigo-400">
-                👤
-              </div>
-              <div>
-                <h3 id="reveal-player-name" class="text-2xl font-bold text-white">
-                  Élève
-                </h3>
-                <p class="text-xs text-slate-400 mt-1">
-                  Touchez votre carte pour découvrir votre rôle secret !
-                </p>
-              </div>
-              <div class="px-4 py-2 rounded-lg bg-indigo-900/50 border border-indigo-700/60 text-indigo-200 text-xs font-semibold flex items-center gap-2 animate-bounce">
-                <i class="fa-solid fa-hand-pointer"></i> Cliquer pour retourner la carte
-              </div>
-            </div>
-
-            <!-- Card Back (Secret Revealed) -->
-            <div id="card-back-element" class="card-back absolute inset-0 rounded-2xl p-6 flex flex-col items-center justify-between text-center border-2 border-indigo-500 bg-slate-900">
-              
-              <div class="w-full flex items-center justify-between text-xs text-slate-400">
-                <span id="card-back-player-title" class="font-bold">Mon Rôle Secret</span>
-                <span>🤫 Ne montrez pas aux voisins !</span>
-              </div>
-
-              <!-- Role Content (Innocent vs Impostor) -->
-              <div id="role-display-content" class="my-auto space-y-3">
-                <!-- Dynamically injected -->
-              </div>
-
-              <!-- Ready Button -->
-              <button onclick="event.stopPropagation(); proceedToDiscussion();" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow transition">
-                J'ai retenu mon rôle (Prêt &rarr;)
-              </button>
-
-            </div>
-
-          </div>
-        </div>
-
-        <p class="text-center text-xs text-slate-500">
-          Votre rôle est synchronisé en toute sécurité sur votre propre appareil.
-        </p>
-
-      </div>
-
-      <!-- GAMEPLAY ACTIVE VIEW: DISCUSSION & CLUE ROUND -->
-      <div id="game-discussion-view" class="hidden max-w-4xl mx-auto w-full space-y-6 my-auto py-4">
-        
-        <!-- Header status -->
-        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div class="inline-flex items-center gap-2 text-xs text-indigo-400 font-bold uppercase tracking-wider">
-              <span>🗣️ Tour de parole & Indices</span>
-            </div>
-            <h3 class="text-xl font-bold text-white">
-              Donnez vos indices en français !
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">
-              Utilisez les amorces de phrases ci-dessous pour parler sans trop en dire.
-            </p>
-          </div>
-          <button onclick="goToVotingStage()" class="py-2.5 px-5 bg-gradient-to-r from-red-600 to-indigo-600 hover:from-red-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-check-to-slot"></i> Passer au Vote (Vote Now)
-          </button>
-        </div>
-
-        <!-- Interactive Clue Assistant Toolbar for Discussion -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-          <div class="flex items-center justify-between">
-            <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
-              Assistant de Phrase (Sentence Builder)
-            </h4>
-            <span class="text-[11px] text-slate-400">Sélectionnez une amorce de phrase :</span>
-          </div>
-
-          <!-- Quick Sentence Starters Carousel -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-1">
-            
-            <button onclick="insertClueStarter('Dans cette pièce, d\'habitude on...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
-              <span>"Dans cette pièce, d'habitude on..."</span>
-              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
-            </button>
-
-            <button onclick="insertClueStarter('On y trouve souvent...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
-              <span>"On y trouve souvent..."</span>
-              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
-            </button>
-
-            <button onclick="insertClueStarter('Pour faire cette activité, il faut...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
-              <span>"Pour faire cette activité, il faut..."</span>
-              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
-            </button>
-
-            <button onclick="insertClueStarter('Je trouve que [Nom] est très suspect car...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-red-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
-              <span>"Je trouve que [Nom] est suspect car..."</span>
-              <i class="fa-solid fa-plus text-slate-600 group-hover:text-red-400"></i>
-            </button>
-
-            <button onclick="insertClueStarter('Je vous jure que je suis un innocent !')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
-              <span>"Je vous jure que je suis un innocent !"</span>
-              <i class="fa-solid fa-plus text-slate-600 group-hover:text-emerald-400"></i>
-            </button>
-
-            <button onclick="insertClueStarter('C\'est un endroit très calme/bruyant où...')" class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/60 text-left text-xs text-slate-200 transition flex items-center justify-between group">
-              <span>"C'est un endroit calme/bruyant où..."</span>
-              <i class="fa-solid fa-plus text-slate-600 group-hover:text-indigo-400"></i>
-            </button>
-
-          </div>
-
-          <!-- Active Speech Playground Box -->
-          <div class="bg-slate-950 border border-indigo-900/50 rounded-xl p-3 space-y-2">
-            <label class="block text-[11px] text-indigo-300 font-semibold uppercase tracking-wider">
-              Votre indice à prononcer à voix haute :
-            </label>
-            <div class="flex items-center gap-2">
-              <input type="text" id="clue-builder-input" placeholder="Choisissez une amorce ou tapez votre phrase..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-              <button onclick="speakCurrentClueInput()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow">
-                <i class="fa-solid fa-volume-high"></i>
-                <span>Écouter</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Players Turn Tracker Cards Grid -->
-        <div id="discussion-players-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <!-- Populated by JS -->
-        </div>
-
-      </div>
-
-      <!-- GAMEPLAY ACTIVE VIEW: VOTING STAGE -->
-      <div id="game-voting-view" class="hidden max-w-2xl mx-auto w-full space-y-6 my-auto py-6">
-        
-        <div class="text-center space-y-2">
-          <span class="px-3 py-1 bg-red-950 text-red-400 border border-red-800 rounded-full text-xs font-bold uppercase tracking-wider">
-            🗳️ Phase d'Accusation
-          </span>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white">
-            Qui est l'Imposteur selon vous ?
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-400">
-            Discutez ensemble puis désignez la personne la plus suspecte !
-          </p>
-        </div>
-
-        <!-- Player Voting List -->
-        <div id="voting-players-container" class="space-y-3">
-          <!-- Injected dynamically -->
-        </div>
-
-        <button onclick="tallyVotesAndReveal()" class="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-bold text-base rounded-2xl shadow-xl shadow-red-600/30 transition flex items-center justify-center gap-2">
-          <i class="fa-solid fa-gavel"></i> Valider les Votes & Démasquer
-        </button>
-
-      </div>
-
-      <!-- GAMEPLAY ACTIVE VIEW: GAME RESULTS / REVEAL -->
-      <div id="game-results-view" class="hidden max-w-2xl mx-auto w-full space-y-6 my-auto py-6 text-center">
-        
-        <div id="results-banner" class="p-6 rounded-3xl border space-y-4 bg-slate-900">
-          <!-- Dynamically filled with victory/defeat styling -->
-        </div>
-
-        <!-- Reveal details card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-left space-y-3 text-xs sm:text-sm">
-          <h4 class="font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center gap-2">
-            <i class="fa-solid fa-file-invoice text-indigo-400"></i> Résumé du Mot Secret
-          </h4>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <span class="text-slate-400 block text-[11px]">Mot pour les Innocents :</span>
-              <span id="res-innocent-word" class="font-bold text-emerald-400 text-base">
-                La cuisine
-              </span>
-            </div>
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-              <span class="text-slate-400 block text-[11px]">L'Imposteur était :</span>
-              <span id="res-impostor-name" class="font-bold text-red-400 text-base">
-                Lucas
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Play Again buttons -->
-        <div class="flex flex-col sm:flex-row gap-3">
-          <button onclick="restartSameGame()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl shadow transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-rotate-right"></i> Rejouer avec les mêmes élèves
-          </button>
-          <button onclick="backToSetup()" class="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm rounded-xl transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-gear"></i> Changer les paramètres
-          </button>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- TAB 2: SENTENCE STARTERS TOOLKIT (AMORCES DE PHRASES) -->
-    <!-- ========================================================================= -->
-    <section id="tab-starters" class="tab-content hidden flex-1 flex flex-col space-y-6">
-      
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-comment-dots text-purple-400"></i> Amorces de Phrases (Sentence Starters)
-          </h2>
-          <p class="text-xs text-slate-400 mt-1">
-            Utilisez ces structures de phrases pour vous exprimer en français pendant le jeu !
-          </p>
-        </div>
-
-        <!-- Filter Categories -->
-        <div class="flex flex-wrap gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-          <button onclick="filterStarters('all')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition">Toutes</button>
-          <button onclick="filterStarters('clues')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Indices</button>
-          <button onclick="filterStarters('questions')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Questions</button>
-          <button onclick="filterStarters('accusations')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Accusations</button>
-          <button onclick="filterStarters('defense')" class="starter-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 transition">Défense</button>
-        </div>
-      </div>
-
-      <!-- Sentence Starters Grid -->
-      <div id="starters-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Injected dynamically by JS -->
-      </div>
-
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- TAB 3: VOCABULARY MATRIX (LES PIÈCES & ACTIVITÉS) -->
-    <!-- ========================================================================= -->
-    <section id="tab-vocab" class="tab-content hidden flex-1 flex flex-col space-y-6">
-      
-      <div class="border-b border-slate-800 pb-4">
-        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-house text-emerald-400"></i> Vocabulaire : Les Pièces & Activités
-        </h2>
-        <p class="text-xs text-slate-400 mt-1">
-          Explorez les noms des pièces, les verbes d'action et les objets associés pour enrichir vos indices.
-        </p>
-      </div>
-
-      <!-- Vocab Grid -->
-      <div id="vocab-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Injected dynamically by JS -->
-      </div>
-
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- TAB 4: RULES & TEACHER TUTORIAL -->
-    <!-- ========================================================================= -->
-    <section id="tab-rules" class="tab-content hidden flex-1 flex flex-col space-y-6 max-w-4xl mx-auto w-full">
-      
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6">
-        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
-          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-2xl">
-            <i class="fa-solid fa-book-open"></i>
-          </div>
-          <div>
-            <h2 class="text-2xl font-bold text-white">Comment Jouer à "Qui est l'Imposteur ?"</h2>
-            <p class="text-xs text-slate-400">Guide pédagogique pour la classe de français langue étrangère (FLE)</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">1</span>
-            <h3 class="font-bold text-sm text-white">Rejoindre la salle</h3>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Le professeur crée une salle avec le bouton hôte. Chaque élève entre le code à 4 chiffres sur son appareil.
-            </p>
-          </div>
-
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">2</span>
-            <h3 class="font-bold text-sm text-white">Rôle Secret</h3>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Les Innocents reçoivent un mot (ex: <em>La cuisine</em>). L'Imposteur ne voit aucun mot et doit bluffer !
-            </p>
-          </div>
-
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">3</span>
-            <h3 class="font-bold text-sm text-white">Indices & Vote</h3>
-            <p class="text-xs text-slate-400 leading-relaxed">
-              Chacun donne un indice oral en français avec l'assistant de phrases. Puis tout le monde vote pour éliminer le suspect.
-            </p>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-  </main>
-
-  <!-- ========================================================================= -->
-  <!-- JAVASCRIPT LOGIC ENGINE WITH FIREBASE REALTIME MULTIPLAYER -->
+  <!-- JAVASCRIPT LOGIC ENGINE WITH FIREBASE & LOCAL FALLBACK MULTIPLAYER -->
   <!-- ========================================================================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -695,18 +173,39 @@
           appId: "1:123456789:web:demo"
         };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    let app = null;
+    let auth = null;
+    let db = null;
+    let useLocalFallback = false;
 
-    let currentUser = null;
+    try {
+      if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "demo-api-key") {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+      } else {
+        useLocalFallback = true;
+      }
+    } catch(e) {
+      console.warn("Firebase init failed, switching to local multi-tab mode:", e);
+      useLocalFallback = true;
+    }
+
+    let currentUser = { uid: 'user_' + Math.random().toString(36).substring(2, 9) };
     let roomUnsubscribe = null;
 
+    // BroadcastChannel fallback for multi-tab / local testing
+    const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('imposteur_room_sync') : null;
+
     function getRoomDocRef(code) {
+      if (useLocalFallback || !db) return null;
       return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code.toString().toUpperCase());
     }
 
     async function initAuthentication() {
+      if (useLocalFallback || !auth) {
+        return currentUser;
+      }
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           const cred = await signInWithCustomToken(auth, __initial_auth_token);
@@ -716,18 +215,30 @@
           currentUser = cred.user;
         }
       } catch (e) {
-        console.warn("Auth initialization error:", e);
+        console.warn("Auth initialization error, falling back to local session:", e);
+        useLocalFallback = true;
       }
+      return currentUser;
     }
 
     initAuthentication();
 
+    function saveLocalRoomState(code, roomData) {
+      try {
+        localStorage.setItem(`imposteur_room_${code}`, JSON.stringify(roomData));
+        if (localChannel) localChannel.postMessage({ type: 'ROOM_UPDATE', code, roomData });
+      } catch(e) { console.error("Local save error:", e); }
+    }
+
+    function getLocalRoomState(code) {
+      try {
+        const data = localStorage.getItem(`imposteur_room_${code}`);
+        return data ? JSON.parse(data) : null;
+      } catch(e) { return null; }
+    }
+
     window.createNewOnlineRoom = async function() {
-      if (!currentUser) await initAuthentication();
-      if (!currentUser) {
-        alert("Erreur de connexion. Veuillez réespayer.");
-        return;
-      }
+      await initAuthentication();
 
       const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
       gameState.roomCode = roomCode;
@@ -752,17 +263,25 @@
         createdAt: Date.now()
       };
 
-      try {
-        await setDoc(getRoomDocRef(roomCode), roomData);
-        listenToRoom(roomCode);
-        showLobbyUI(roomCode, true);
-      } catch (err) {
-        console.error("Error creating room:", err);
+      if (!useLocalFallback && db) {
+        try {
+          await setDoc(getRoomDocRef(roomCode), roomData);
+        } catch (err) {
+          console.warn("Cloud connection unavailable, creating local room instead:", err);
+          useLocalFallback = true;
+        }
       }
+
+      if (useLocalFallback) {
+        saveLocalRoomState(roomCode, roomData);
+      }
+
+      listenToRoom(roomCode);
+      showLobbyUI(roomCode, true);
     };
 
     window.joinRoomByCode = async function() {
-      if (!currentUser) await initAuthentication();
+      await initAuthentication();
       const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
       const nameInput = document.getElementById('join-name-input').value.trim();
 
@@ -779,50 +298,130 @@
       gameState.isHost = false;
       gameState.myPlayerName = nameInput;
 
-      const roomRef = getRoomDocRef(codeInput);
-      try {
-        const snap = await getDoc(roomRef);
-        if (!snap.exists()) {
-          alert("Code de salle introuvable ! Vérifiez le code avec votre professeur.");
-          return;
-        }
+      let roomData = null;
 
-        const roomData = snap.data();
-        if (roomData.status !== 'LOBBY') {
-          alert("La partie a déjà commencé dans cette salle.");
-          return;
+      if (!useLocalFallback && db) {
+        try {
+          const roomRef = getRoomDocRef(codeInput);
+          const snap = await getDoc(roomRef);
+          if (snap.exists()) {
+            roomData = snap.data();
+          }
+        } catch (err) {
+          console.warn("Cloud query failed, checking local storage:", err);
+          useLocalFallback = true;
         }
-
-        const updatedPlayers = roomData.players || [];
-        if (!updatedPlayers.some(p => p.id === currentUser.uid)) {
-          updatedPlayers.push({
-            id: currentUser.uid,
-            name: nameInput,
-            isHost: false,
-            role: null
-          });
-          await updateDoc(roomRef, { players: updatedPlayers });
-        }
-
-        listenToRoom(codeInput);
-        showLobbyUI(codeInput, false);
-      } catch (err) {
-        console.error("Error joining room:", err);
-        alert("Impossible de rejoindre la salle.");
       }
+
+      if (!roomData) {
+        roomData = getLocalRoomState(codeInput);
+      }
+
+      if (!roomData) {
+        alert("Code de salle introuvable ! Vérifiez le code à 4 chiffres avec votre professeur.");
+        return;
+      }
+
+      if (roomData.status !== 'LOBBY') {
+        alert("La partie a déjà commencé dans cette salle.");
+        return;
+      }
+
+      const updatedPlayers = roomData.players || [];
+      if (!updatedPlayers.some(p => p.id === currentUser.uid)) {
+        updatedPlayers.push({
+          id: currentUser.uid,
+          name: nameInput,
+          isHost: false,
+          role: null
+        });
+        roomData.players = updatedPlayers;
+
+        if (!useLocalFallback && db) {
+          try {
+            await updateDoc(getRoomDocRef(codeInput), { players: updatedPlayers });
+          } catch(e) {
+            useLocalFallback = true;
+            saveLocalRoomState(codeInput, roomData);
+          }
+        } else {
+          saveLocalRoomState(codeInput, roomData);
+        }
+      }
+
+      listenToRoom(codeInput);
+      showLobbyUI(codeInput, false);
+      syncGameStateFromFirebase(roomData);
     };
 
     function listenToRoom(code) {
-      if (roomUnsubscribe) roomUnsubscribe();
+      if (roomUnsubscribe) {
+        roomUnsubscribe();
+        roomUnsubscribe = null;
+      }
 
-      const roomRef = getRoomDocRef(code);
-      roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
-        if (!snapshot.exists()) return;
-        const data = snapshot.data();
-        syncGameStateFromFirebase(data);
-      }, (error) => {
-        console.error("Room snapshot error:", error);
-      });
+      if (!useLocalFallback && db) {
+        const roomRef = getRoomDocRef(code);
+        try {
+          roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const data = snapshot.data();
+            syncGameStateFromFirebase(data);
+          }, (error) => {
+            console.warn("Room snapshot error, falling back to local listener:", error);
+            useLocalFallback = true;
+            listenLocalRoom(code);
+          });
+          return;
+        } catch(e) {
+          useLocalFallback = true;
+        }
+      }
+
+      listenLocalRoom(code);
+    }
+
+    function listenLocalRoom(code) {
+      const initialData = getLocalRoomState(code);
+      if (initialData) syncGameStateFromFirebase(initialData);
+
+      if (localChannel) {
+        localChannel.onmessage = (event) => {
+          if (event.data && event.data.code === code && event.data.roomData) {
+            syncGameStateFromFirebase(event.data.roomData);
+          }
+        };
+      }
+
+      // Polling fallback in case BroadcastChannel isn't supported across distinct contexts
+      if (!window.localRoomInterval) {
+        window.localRoomInterval = setInterval(() => {
+          if (gameState.roomCode) {
+            const latest = getLocalRoomState(gameState.roomCode);
+            if (latest) syncGameStateFromFirebase(latest);
+          }
+        }, 1000);
+      }
+    }
+
+    async function updateRoomState(updateObject) {
+      const code = gameState.roomCode;
+      if (!code) return;
+
+      if (!useLocalFallback && db) {
+        try {
+          await updateDoc(getRoomDocRef(code), updateObject);
+          return;
+        } catch(e) {
+          console.warn("Failed to update cloud, using local state update:", e);
+          useLocalFallback = true;
+        }
+      }
+
+      const localData = getLocalRoomState(code) || {};
+      const updatedData = { ...localData, ...updateObject };
+      saveLocalRoomState(code, updatedData);
+      syncGameStateFromFirebase(updatedData);
     }
 
     function syncGameStateFromFirebase(data) {
@@ -869,11 +468,11 @@
         } else {
           roleBox.innerHTML = `
             <div class="space-y-3">
-              <span class="text-5xl">${gameState.secretRoom.icon}</span>
+              <span class="text-5xl">${gameState.secretRoom ? gameState.secretRoom.icon : '🏠'}</span>
               <div>
                 <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Tu es Innocent • Ton Mot Secret :</span>
-                <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom.name}</h4>
-                <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity}</span></p>
+                <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom ? gameState.secretRoom.name : 'La pièce'}</h4>
+                <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity || ''}</span></p>
               </div>
             </div>
           `;
@@ -896,14 +495,17 @@
 
     window.startOnlineGameHost = async function() {
       if (!gameState.roomCode) return;
-      const roomRef = getRoomDocRef(gameState.roomCode);
-      const snap = await getDoc(roomRef);
-      if (!snap.exists()) return;
+      
+      let data = useLocalFallback ? getLocalRoomState(gameState.roomCode) : null;
+      if (!data && db) {
+        const snap = await getDoc(getRoomDocRef(gameState.roomCode));
+        if (snap.exists()) data = snap.data();
+      }
+      if (!data) return;
 
-      const data = snap.data();
       const players = data.players || [];
-      if (players.length < 3) {
-        alert("Il faut au moins 3 joueurs pour démarrer !");
+      if (players.length < 2) {
+        alert("Il faut au moins 2 joueurs pour démarrer la partie !");
         return;
       }
 
@@ -915,14 +517,14 @@
         const j = Math.floor(Math.random() * (i + 1));
         [playerIndices[i], playerIndices[j]] = [playerIndices[j], playerIndices[i]];
       }
-      const impostorIndices = playerIndices.slice(0, data.impostorCount);
+      const impostorIndices = playerIndices.slice(0, data.impostorCount || 1);
 
       const assignedPlayers = players.map((p, idx) => ({
         ...p,
         role: impostorIndices.includes(idx) ? 'impostor' : 'innocent'
       }));
 
-      await updateDoc(roomRef, {
+      await updateRoomState({
         status: 'REVEAL',
         secretRoom: randomRoom,
         secretActivity: randomActivity,
@@ -931,8 +533,8 @@
     };
 
     window.proceedToDiscussion = async function() {
-      if (gameState.isHost && gameState.roomCode) {
-        await updateDoc(getRoomDocRef(gameState.roomCode), { status: 'DISCUSSION' });
+      if (gameState.roomCode) {
+        await updateRoomState({ status: 'DISCUSSION' });
       } else {
         document.getElementById('game-reveal-view').classList.add('hidden');
         document.getElementById('game-discussion-view').classList.remove('hidden');
@@ -941,8 +543,8 @@
     };
 
     window.goToVotingStage = async function() {
-      if (gameState.isHost && gameState.roomCode) {
-        await updateDoc(getRoomDocRef(gameState.roomCode), { status: 'VOTING' });
+      if (gameState.roomCode) {
+        await updateRoomState({ status: 'VOTING' });
       } else {
         document.getElementById('game-discussion-view').classList.add('hidden');
         document.getElementById('game-voting-view').classList.remove('hidden');
@@ -975,8 +577,8 @@
 
     window.tallyVotesAndReveal = async function() {
       const suspectIdx = gameState.selectedSuspectIndex !== undefined ? gameState.selectedSuspectIndex : 0;
-      if (gameState.isHost && gameState.roomCode) {
-        await updateDoc(getRoomDocRef(gameState.roomCode), {
+      if (gameState.roomCode) {
+        await updateRoomState({
           status: 'RESULTS',
           selectedSuspectIndex: suspectIdx
         });
