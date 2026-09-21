@@ -71,100 +71,6 @@
       transform: rotateY(180deg);
     }
   </style>
-
-  <script>
-    // Global Game Data & State
-    window.gameState = {
-      roomCode: null,
-      isHost: false,
-      myPlayerName: '',
-      myPeerId: null,
-      selectedSuspectIndex: null,
-      roomData: {
-        status: 'LOBBY',
-        players: [],
-        secretRoom: null,
-        secretActivity: null,
-        impostorCount: 1
-      }
-    };
-
-    window.ROOMS_DATA = [
-      {
-        id: 'cuisine',
-        name: 'La cuisine',
-        translation: 'The kitchen',
-        icon: '🍳',
-        activities: ['cuisiner', 'préparer le repas', 'faire la vaisselle', 'cuire un gâteau'],
-        items: ['le four', 'le réfrigérateur', 'les casseroles', 'l\'évier']
-      },
-      {
-        id: 'chambre',
-        name: 'La chambre',
-        translation: 'The bedroom',
-        icon: '🛏️',
-        activities: ['dormir', 'faire son lit', 'ranger ses vêtements', 'lire un livre'],
-        items: ['le lit', 'l\'armoire', 'l\'oreiller', 'la lampe de chevet']
-      },
-      {
-        id: 'salle_de_bains',
-        name: 'La salle de bains',
-        translation: 'The bathroom',
-        icon: '🚿',
-        activities: ['se laver les mains', 'prendre une douche', 'se brosser les dents'],
-        items: ['la douche', 'le savon', 'la serviette', 'le miroir']
-      },
-      {
-        id: 'salon',
-        name: 'Le salon',
-        translation: 'The living room',
-        icon: '🛋️',
-        activities: ['regarder la télévision', 'se détendre sur le canapé', 'écouter de la musique'],
-        items: ['le canapé', 'la télévision', 'la table basse', 'le fauteuil']
-      },
-      {
-        id: 'salle_a_manger',
-        name: 'La salle à manger',
-        translation: 'The dining room',
-        icon: '🍽️',
-        activities: ['manger le dîner', 'mettre la table', 'débarrasser les assiettes'],
-        items: ['la grande table', 'les chaises', 'la vaisselle', 'la nappe']
-      },
-      {
-        id: 'jardin',
-        name: 'Le jardin',
-        translation: 'The garden / yard',
-        icon: '🌳',
-        activities: ['jouer au ballon', 'planter des fleurs', 'arroser les plantes'],
-        items: ['l\'herbe', 'les fleurs', 'l\'arrosoir', 'les arbres']
-      },
-      {
-        id: 'garage',
-        name: 'Le garage',
-        translation: 'The garage',
-        icon: '🚗',
-        activities: ['garer la voiture', 'réparer un vélo', 'ranger des outils'],
-        items: ['la voiture', 'les outils', 'le vélo', 'les cartons']
-      },
-      {
-        id: 'bureau',
-        name: 'Le bureau',
-        translation: 'The study / office',
-        icon: '💻',
-        activities: ['faire ses devoirs', 'travailler sur l\'ordinateur', 'étudier'],
-        items: ['l\'ordinateur', 'la chaise de bureau', 'les crayons', 'les livres']
-      }
-    ];
-
-    window.SENTENCE_STARTERS = [
-      { categoryLabel: 'Indice', french: "Dans cette pièce, d'habitude on...", english: "In this room, usually we..." },
-      { categoryLabel: 'Indice', french: "On y trouve souvent du/de la/des...", english: "We often find ... here." },
-      { categoryLabel: 'Indice', french: "C'est un endroit parfait pour...", english: "It's a perfect place to..." },
-      { categoryLabel: 'Question', french: "Est-ce qu'on utilise de l'eau ici ?", english: "Do we use water here?" },
-      { categoryLabel: 'Accusation', french: "Je trouve que [Nom] est suspect !", english: "I think [Name] is suspicious!" },
-      { categoryLabel: 'Défense', french: "Je vous jure que je suis un vrai innocent !", english: "I swear I am innocent!" }
-    ];
-  </script>
 </head>
 <body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-red-500 selection:text-white">
 
@@ -369,16 +275,97 @@
 
   <!-- PEERJS MULTIPLAYER LOGIC -->
   <script>
-    let peer = null;
-    let connections = []; // Host: keeps track of all student sockets
-    let hostConn = null;  // Student: single socket to host
+    window.gameState = {
+      roomCode: null,
+      isHost: false,
+      myPlayerName: '',
+      myPeerId: null,
+      selectedSuspectIndex: null,
+      roomData: {
+        status: 'LOBBY',
+        players: [],
+        secretRoom: null,
+        secretActivity: null,
+        impostorCount: 1
+      }
+    };
 
-    // Generate random 4-digit code
+    window.ROOMS_DATA = [
+      {
+        id: "cuisine",
+        name: "La cuisine",
+        translation: "The kitchen",
+        icon: "🍳",
+        activities: ["cuisiner", "préparer le repas", "faire la vaisselle", "cuire un gâteau"]
+      },
+      {
+        id: "chambre",
+        name: "La chambre",
+        translation: "The bedroom",
+        icon: "🛏️",
+        activities: ["dormir", "faire son lit", "ranger ses vêtements", "lire un livre"]
+      },
+      {
+        id: "salle_de_bains",
+        name: "La salle de bains",
+        translation: "The bathroom",
+        icon: "🚿",
+        activities: ["se laver les mains", "prendre une douche", "se brosser les dents"]
+      },
+      {
+        id: "salon",
+        name: "Le salon",
+        translation: "The living room",
+        icon: "🛋️",
+        activities: ["regarder la télévision", "se détendre sur le canapé", "écouter de la musique"]
+      },
+      {
+        id: "salle_a_manger",
+        name: "La salle à manger",
+        translation: "The dining room",
+        icon: "🍽️",
+        activities: ["manger le dîner", "mettre la table", "débarrasser les assiettes"]
+      },
+      {
+        id: "jardin",
+        name: "Le jardin",
+        translation: "The garden / yard",
+        icon: "🌳",
+        activities: ["jouer au ballon", "planter des fleurs", "arroser les plantes"]
+      },
+      {
+        id: "garage",
+        name: "Le garage",
+        translation: "The garage",
+        icon: "🚗",
+        activities: ["garer la voiture", "réparer un vélo", "ranger des outils"]
+      },
+      {
+        id: "bureau",
+        name: "Le bureau",
+        translation: "The study / office",
+        icon: "💻",
+        activities: ["faire ses devoirs", "travailler sur l'ordinateur", "étudier"]
+      }
+    ];
+
+    window.SENTENCE_STARTERS = [
+      { categoryLabel: "Indice", french: "Dans cette pièce, d'habitude on...", english: "In this room, usually we..." },
+      { categoryLabel: "Indice", french: "On y trouve souvent du/de la/des...", english: "We often find ... here." },
+      { categoryLabel: "Indice", french: "C'est un endroit parfait pour...", english: "It's a perfect place to..." },
+      { categoryLabel: "Question", french: "Est-ce qu'on utilise de l'eau ici ?", english: "Do we use water here?" },
+      { categoryLabel: "Accusation", french: "Je trouve que [Nom] est suspect !", english: "I think [Name] is suspicious!" },
+      { categoryLabel: "Défense", french: "Je vous jure que je suis un vrai innocent !", english: "I swear I am innocent!" }
+    ];
+
+    let peer = null;
+    let connections = []; 
+    let hostConn = null;  
+
     function generateCode() {
       return Math.floor(1000 + Math.random() * 9000).toString();
     }
 
-    // CREATE ROOM (HOST)
     window.createNewOnlineRoom = function() {
       const btn = document.getElementById('create-room-btn');
       btn.innerText = "Création de la salle en cours...";
@@ -443,14 +430,13 @@
         btn.innerText = "Créer une salle (Hôte / Prof)";
         btn.disabled = false;
         if (err.type === 'unavailable-id') {
-          createNewOnlineRoom(); // Retry on collision
+          createNewOnlineRoom(); 
         } else {
           alert("Erreur de connexion au serveur réseau : " + err.type);
         }
       });
     };
 
-    // JOIN ROOM (STUDENT)
     window.joinRoomByCode = function() {
       const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
       const nameInput = document.getElementById('join-name-input').value.trim();
@@ -505,7 +491,6 @@
       });
     };
 
-    // Broadcast state from Host to all connected Students
     function broadcastRoomState() {
       connections.forEach(conn => {
         if (conn.open) {
@@ -515,9 +500,7 @@
       syncGameStateUI(window.gameState.roomData);
     }
 
-    // Synchronize UI view across all devices
     function syncGameStateUI(data) {
-      // Lobby Update
       const countEl = document.getElementById('lobby-player-count');
       if (countEl) countEl.innerText = data.players.length;
 
@@ -531,7 +514,6 @@
         `).join('');
       }
 
-      // Hide Next/Proceed buttons for non-hosts
       if (!window.gameState.isHost) {
         ['host-start-btn', 'next-stage-btn', 'vote-stage-btn', 'results-stage-btn'].forEach(id => {
           const el = document.getElementById(id);
@@ -539,7 +521,6 @@
         });
       }
 
-      // Handle Game Phases
       if (data.status === 'REVEAL') {
         document.getElementById('game-lobby-view').classList.add('hidden');
         document.getElementById('game-reveal-view').classList.remove('hidden');
@@ -576,7 +557,7 @@
         document.getElementById('game-discussion-view').classList.remove('hidden');
 
         const list = document.getElementById('discussion-players-list');
-        list.innerHTML = data.players.map((p, idx) => `
+        list.innerHTML = data.players.map((p) => `
           <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
             <span class="font-bold text-white">${p.name}</span>
             <span class="text-slate-500 text-[11px] italic">Donne son indice...</span>
@@ -587,7 +568,7 @@
         document.getElementById('game-voting-view').classList.remove('hidden');
 
         const container = document.getElementById('voting-players-container');
-        container.innerHTML = data.players.map((p, idx) => `
+        container.innerHTML = data.players.map((p) => `
           <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
             <span class="font-bold text-sm text-white">${p.name}</span>
             <span class="text-xs text-red-400 font-semibold">Suspect</span>
@@ -603,7 +584,6 @@
       }
     }
 
-    // HOST GAME CONTROLS
     window.startOnlineGameHost = function() {
       if (window.gameState.roomData.players.length < 2) {
         alert("Il faut au moins 2 joueurs pour démarrer !");
@@ -643,7 +623,6 @@
       broadcastRoomState();
     };
 
-    // UI SWITCHERS
     function toggleCardFlip() {
       document.getElementById('secret-card-container').classList.toggle('flipped');
     }
@@ -672,7 +651,6 @@
       document.getElementById(`section-${tabId}`).classList.remove('hidden');
     }
 
-    // INITIAL RENDER
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('vocab-cards-grid').innerHTML = window.ROOMS_DATA.map(r => `
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
