@@ -119,8 +119,10 @@
         <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur">
           <div class="text-center space-y-2 mb-6">
             <h2 class="text-2xl font-black text-white">Nouvelle Partie Multi-Joueurs</h2>
-            <p class="text-xs text-slate-400">Fonctionne instantanément sur tous les téléphones et ordinateurs.</p>
+            <p class="text-xs text-slate-400">Rejoignez instantanément depuis n'importe quel écran.</p>
           </div>
+
+          <div id="network-status" class="hidden p-3 mb-4 rounded-xl text-xs font-semibold text-center border"></div>
 
           <div class="space-y-6">
             <div>
@@ -144,7 +146,7 @@
             <div class="space-y-3">
               <input type="text" id="join-name-input" placeholder="Votre Prénom (ex: Sophie)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
               <div class="flex gap-2">
-                <input type="text" id="join-code-input" maxlength="4" placeholder="Code 4 chiffres" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white text-center tracking-widest font-mono placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase">
+                <input type="text" id="join-code-input" maxlength="6" placeholder="Code 6 chiffres" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white text-center tracking-widest font-mono placeholder-slate-500 focus:outline-none focus:border-indigo-500 uppercase">
                 <button onclick="joinRoomByCode()" id="join-room-btn" class="px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition text-sm flex items-center gap-2 whitespace-nowrap cursor-pointer">
                   <i class="fa-solid fa-right-to-bracket"></i> Rejoindre
                 </button>
@@ -159,7 +161,7 @@
         <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur text-center space-y-6">
           <div class="inline-block bg-indigo-950/80 border border-indigo-700/60 px-6 py-3 rounded-2xl">
             <span class="text-xs font-bold text-indigo-300 uppercase block">Code de la salle</span>
-            <span id="lobby-code-display" class="text-4xl font-black text-white font-mono tracking-widest">----</span>
+            <span id="lobby-code-display" class="text-3xl font-black text-white font-mono tracking-widest">------</span>
           </div>
 
           <div>
@@ -273,14 +275,13 @@
 
   </main>
 
-  <!-- PEERJS MULTIPLAYER LOGIC -->
+  <!-- MULTIPLAYER PEER JS LOGIC -->
   <script>
     window.gameState = {
       roomCode: null,
       isHost: false,
       myPlayerName: '',
       myPeerId: null,
-      selectedSuspectIndex: null,
       roomData: {
         status: 'LOBBY',
         players: [],
@@ -291,62 +292,14 @@
     };
 
     window.ROOMS_DATA = [
-      {
-        id: "cuisine",
-        name: "La cuisine",
-        translation: "The kitchen",
-        icon: "🍳",
-        activities: ["cuisiner", "préparer le repas", "faire la vaisselle", "cuire un gâteau"]
-      },
-      {
-        id: "chambre",
-        name: "La chambre",
-        translation: "The bedroom",
-        icon: "🛏️",
-        activities: ["dormir", "faire son lit", "ranger ses vêtements", "lire un livre"]
-      },
-      {
-        id: "salle_de_bains",
-        name: "La salle de bains",
-        translation: "The bathroom",
-        icon: "🚿",
-        activities: ["se laver les mains", "prendre une douche", "se brosser les dents"]
-      },
-      {
-        id: "salon",
-        name: "Le salon",
-        translation: "The living room",
-        icon: "🛋️",
-        activities: ["regarder la télévision", "se détendre sur le canapé", "écouter de la musique"]
-      },
-      {
-        id: "salle_a_manger",
-        name: "La salle à manger",
-        translation: "The dining room",
-        icon: "🍽️",
-        activities: ["manger le dîner", "mettre la table", "débarrasser les assiettes"]
-      },
-      {
-        id: "jardin",
-        name: "Le jardin",
-        translation: "The garden / yard",
-        icon: "🌳",
-        activities: ["jouer au ballon", "planter des fleurs", "arroser les plantes"]
-      },
-      {
-        id: "garage",
-        name: "Le garage",
-        translation: "The garage",
-        icon: "🚗",
-        activities: ["garer la voiture", "réparer un vélo", "ranger des outils"]
-      },
-      {
-        id: "bureau",
-        name: "Le bureau",
-        translation: "The study / office",
-        icon: "💻",
-        activities: ["faire ses devoirs", "travailler sur l'ordinateur", "étudier"]
-      }
+      { id: "cuisine", name: "La cuisine", translation: "The kitchen", icon: "🍳", activities: ["cuisiner", "préparer le repas", "faire la vaisselle", "cuire un gâteau"] },
+      { id: "chambre", name: "La chambre", translation: "The bedroom", icon: "🛏️", activities: ["dormir", "faire son lit", "ranger ses vêtements", "lire un livre"] },
+      { id: "salle_de_bains", name: "La salle de bains", translation: "The bathroom", icon: "🚿", activities: ["se laver les mains", "prendre une douche", "se brosser les dents"] },
+      { id: "salon", name: "Le salon", translation: "The living room", icon: "🛋️", activities: ["regarder la télévision", "se détendre sur le canapé", "écouter de la musique"] },
+      { id: "salle_a_manger", name: "La salle à manger", translation: "The dining room", icon: "🍽️", activities: ["manger le dîner", "mettre la table", "débarrasser les assiettes"] },
+      { id: "jardin", name: "Le jardin", translation: "The garden / yard", icon: "🌳", activities: ["jouer au ballon", "planter des fleurs", "arroser les plantes"] },
+      { id: "garage", name: "Le garage", translation: "The garage", icon: "🚗", activities: ["garer la voiture", "réparer un vélo", "ranger des outils"] },
+      { id: "bureau", name: "Le bureau", translation: "The study / office", icon: "💻", activities: ["faire ses devoirs", "travailler sur l'ordinateur", "étudier"] }
     ];
 
     window.SENTENCE_STARTERS = [
@@ -359,25 +312,32 @@
     ];
 
     let peer = null;
-    let connections = []; 
-    let hostConn = null;  
+    let connections = [];
+    let hostConn = null;
 
-    function generateCode() {
-      return Math.floor(1000 + Math.random() * 9000).toString();
+    function showStatus(msg, isError = false) {
+      const el = document.getElementById('network-status');
+      if (!el) return;
+      el.classList.remove('hidden', 'bg-red-950/80', 'border-red-800', 'text-red-300', 'bg-indigo-950/80', 'border-indigo-800', 'text-indigo-300');
+      if (isError) {
+        el.classList.add('bg-red-950/80', 'border-red-800', 'text-red-300');
+      } else {
+        el.classList.add('bg-indigo-950/80', 'border-indigo-800', 'text-indigo-300');
+      }
+      el.innerText = msg;
     }
 
     window.createNewOnlineRoom = function() {
       const btn = document.getElementById('create-room-btn');
-      btn.innerText = "Création de la salle en cours...";
+      btn.innerText = "Connexion au réseau...";
       btn.disabled = true;
+      showStatus("Initialisation du réseau...");
 
-      const roomCode = generateCode();
-      const peerId = 'imposteur-room-' + roomCode;
-
-      peer = new Peer(peerId);
+      peer = new Peer();
 
       peer.on('open', (id) => {
-        window.gameState.roomCode = roomCode;
+        const shortCode = id.substring(0, 6).toUpperCase();
+        window.gameState.roomCode = shortCode;
         window.gameState.isHost = true;
         window.gameState.myPlayerName = "Professeur (Hôte)";
         window.gameState.myPeerId = id;
@@ -386,7 +346,7 @@
         const impostorCount = countEl ? parseInt(countEl.value, 10) : 1;
 
         window.gameState.roomData = {
-          code: roomCode,
+          code: shortCode,
           status: 'LOBBY',
           impostorCount: impostorCount,
           secretRoom: null,
@@ -399,7 +359,7 @@
           }]
         };
 
-        showLobbyUI(roomCode, true);
+        showLobbyUI(shortCode, true);
       });
 
       peer.on('connection', (conn) => {
@@ -429,32 +389,29 @@
       peer.on('error', (err) => {
         btn.innerText = "Créer une salle (Hôte / Prof)";
         btn.disabled = false;
-        if (err.type === 'unavailable-id') {
-          createNewOnlineRoom(); 
-        } else {
-          alert("Erreur de connexion au serveur réseau : " + err.type);
-        }
+        showStatus("Erreur de connexion : " + err.type, true);
       });
     };
 
     window.joinRoomByCode = function() {
-      const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
+      const codeInput = document.getElementById('join-code-input').value.trim().toLowerCase();
       const nameInput = document.getElementById('join-name-input').value.trim();
       const btn = document.getElementById('join-room-btn');
 
-      if (!codeInput || codeInput.length !== 4) {
-        alert("Veuillez entrer un code à 4 chiffres valide.");
+      if (!codeInput || codeInput.length < 4) {
+        showStatus("Veuillez entrer le code affiché sur l'écran de l'hôte.", true);
         return;
       }
       if (!nameInput) {
-        alert("Veuillez entrer votre prénom.");
+        showStatus("Veuillez entrer votre prénom.", true);
         return;
       }
 
-      btn.innerText = "Connexion...";
+      btn.innerText = "Recherche...";
       btn.disabled = true;
+      showStatus("Recherche de la salle en cours...");
 
-      window.gameState.roomCode = codeInput;
+      window.gameState.roomCode = codeInput.toUpperCase();
       window.gameState.isHost = false;
       window.gameState.myPlayerName = nameInput;
 
@@ -462,12 +419,12 @@
 
       peer.on('open', (myId) => {
         window.gameState.myPeerId = myId;
-        const targetPeerId = 'imposteur-room-' + codeInput;
-        hostConn = peer.connect(targetPeerId);
+        
+        hostConn = peer.connect(codeInput);
 
         hostConn.on('open', () => {
           hostConn.send({ type: 'JOIN', playerName: nameInput });
-          showLobbyUI(codeInput, false);
+          showLobbyUI(codeInput.toUpperCase(), false);
         });
 
         hostConn.on('data', (data) => {
@@ -478,14 +435,14 @@
         });
 
         hostConn.on('error', () => {
-          alert("Impossible de rejoindre la salle ! Vérifiez le code.");
+          showStatus("Impossible de rejoindre la salle ! Vérifiez le code.", true);
           btn.innerText = "Rejoindre";
           btn.disabled = false;
         });
       });
 
       peer.on('error', (err) => {
-        alert("Salle introuvable ou fermée par le professeur.");
+        showStatus("Salle introuvable ou code invalide (" + err.type + ")", true);
         btn.innerText = "Rejoindre";
         btn.disabled = false;
       });
