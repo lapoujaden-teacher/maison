@@ -1,243 +1,91 @@
-<!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-900 text-slate-100">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qui est l'Imposteur ? - Les Pièces & Activités de la Maison</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            frenchBlue: '#002654',
-            frenchRed: '#ED2939',
-            spaceDark: '#0B0F19',
-            cardDark: '#1E293B',
-            accentCyan: '#06B6D4',
-            accentPurple: '#8B5CF6'
-          },
-          fontFamily: {
-            sans: ['Fredoka', 'Inter', 'sans-serif'],
-          }
-        }
-      }
+  // Safe variable initialization
+  const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'imposteur-house-game';
+  let firebaseConfig = null;
+
+  try {
+    if (typeof window.__firebase_config !== 'undefined' && window.__firebase_config) {
+      firebaseConfig = typeof window.__firebase_config === 'string' 
+        ? JSON.parse(window.__firebase_config) 
+        : window.__firebase_config;
     }
-  </script>
+  } catch (e) {
+    console.warn("Invalid Firebase configuration format, using local mode.");
+  }
 
-  <!-- Google Fonts: Fredoka & Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  let app = null;
+  let auth = null;
+  let db = null;
+  let useLocalFallback = true;
 
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <style>
-    body {
-      font-family: 'Fredoka', sans-serif;
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #475569;
-      border-radius: 4px;
-    }
-    .card-flip {
-      perspective: 1000px;
-    }
-    .card-inner {
-      transition: transform 0.6s;
-      transform-style: preserve-3d;
-    }
-    .card-flip.flipped .card-inner {
-      transform: rotateY(180deg);
-    }
-    .card-front, .card-back {
-      backface-visibility: hidden;
-    }
-    .card-back {
-      transform: rotateY(180deg);
-    }
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px rgba(237, 41, 57, 0.4); }
-      50% { box-shadow: 0 0 30px rgba(237, 41, 57, 0.8); }
-    }
-    .impostor-glow {
-      animation: pulseGlow 2s infinite;
-    }
-  </style>
-</head>
-<body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-red-500 selection:text-white">
-
-  <!-- Application Header -->
-  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      
-      <!-- Logo & Title -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-frenchBlue via-indigo-600 to-frenchRed flex items-center justify-center text-white font-bold text-xl shadow-lg border border-white/20">
-          🕵️
-        </div>
-        <div>
-          <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-red-400 via-purple-300 to-blue-400 bg-clip-text text-transparent">
-            Qui est l'Imposteur ?
-          </h1>
-          <p class="text-xs text-slate-400 flex items-center gap-1">
-            <span>🏠 Les Pièces & Activités</span>
-            <span class="text-slate-600">•</span>
-            <span class="text-xs bg-red-950 text-red-300 px-1.5 py-0.5 rounded border border-red-800/50">FRANÇAIS</span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Main Navigation Tabs -->
-      <nav class="hidden md:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-        <button onclick="switchTab('game')" id="nav-game" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 bg-indigo-600 text-white shadow">
-          <i class="fa-solid fa-gamepad"></i> Jouer (Game)
-        </button>
-        <button onclick="switchTab('starters')" id="nav-starters" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
-          <i class="fa-solid fa-comment-dots text-purple-400"></i> Amorces de Phrases
-        </button>
-        <button onclick="switchTab('vocab')" id="nav-vocab" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
-          <i class="fa-solid fa-house text-emerald-400"></i> Vocabulaire
-        </button>
-        <button onclick="switchTab('rules')" id="nav-rules" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800/60 flex items-center gap-2">
-          <i class="fa-solid fa-book-open text-amber-400"></i> Règles & Tuto
-        </button>
-      </nav>
-
-      <!-- Quick Action Header -->
-      <div class="flex items-center gap-2">
-        <div id="room-code-badge" class="hidden px-3 py-1.5 rounded-lg bg-indigo-950/80 border border-indigo-700/60 text-indigo-300 text-xs font-bold flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>CODE: <strong id="active-room-display" class="text-white text-sm tracking-widest font-mono">----</strong></span>
-        </div>
-        <button onclick="toggleAudioEngine()" id="audio-toggle-btn" title="Activer/Désactiver la prononciation audio" class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs flex items-center gap-2 transition">
-          <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
-          <span class="hidden sm:inline" id="audio-status-label">Audio: ON</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Mobile Navigation Bar -->
-    <div class="md:hidden flex border-t border-slate-800/80 bg-slate-900 px-2 py-1 justify-around text-xs">
-      <button onclick="switchTab('game')" id="nav-mob-game" class="mob-nav-btn py-1 px-3 rounded-md text-indigo-400 font-bold flex flex-col items-center gap-0.5">
-        <i class="fa-solid fa-gamepad text-base"></i>
-        <span>Jouer</span>
-      </button>
-      <button onclick="switchTab('starters')" id="nav-mob-starters" class="mob-nav-btn py-1 px-3 rounded-md text-slate-400 flex flex-col items-center gap-0.5">
-        <i class="fa-solid fa-comment-dots text-base"></i>
-        <span>Phrases</span>
-      </button>
-      <button onclick="switchTab('vocab')" id="nav-mob-vocab" class="mob-nav-btn py-1 px-3 rounded-md text-slate-400 flex flex-col items-center gap-0.5">
-        <i class="fa-solid fa-house text-base"></i>
-        <span>Vocabulaire</span>
-      </button>
-      <button onclick="switchTab('rules')" id="nav-mob-rules" class="mob-nav-btn py-1 px-3 rounded-md text-slate-400 flex flex-col items-center gap-0.5">
-        <i class="fa-solid fa-book-open text-base"></i>
-        <span>Règles</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
-
-    <!-- ========================================================================= -->
-  <!-- JAVASCRIPT LOGIC ENGINE WITH FIREBASE & LOCAL FALLBACK MULTIPLAYER -->
-  <!-- ========================================================================= -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Initialize Firebase
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'imposteur-house-game';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' 
-      ? JSON.parse(__firebase_config) 
-      : {
-          apiKey: "demo-api-key",
-          authDomain: "demo-app.firebaseapp.com",
-          projectId: "demo-app",
-          storageBucket: "demo-app.appspot.com",
-          messagingSenderId: "123456789",
-          appId: "1:123456789:web:demo"
-        };
-
-    let app = null;
-    let auth = null;
-    let db = null;
-    let useLocalFallback = false;
-
+  if (firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "demo-api-key") {
     try {
-      if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "demo-api-key") {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-      } else {
-        useLocalFallback = true;
-      }
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      useLocalFallback = false;
     } catch(e) {
       console.warn("Firebase init failed, switching to local multi-tab mode:", e);
       useLocalFallback = true;
     }
+  }
 
-    let currentUser = { uid: 'user_' + Math.random().toString(36).substring(2, 9) };
-    let roomUnsubscribe = null;
+  let currentUser = { uid: 'user_' + Math.random().toString(36).substring(2, 9) };
+  let roomUnsubscribe = null;
 
-    // BroadcastChannel fallback for multi-tab / local testing
-    const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('imposteur_room_sync') : null;
+  const localChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('imposteur_room_sync') : null;
 
-    function getRoomDocRef(code) {
-      if (useLocalFallback || !db) return null;
-      return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code.toString().toUpperCase());
-    }
+  function getRoomDocRef(code) {
+    if (useLocalFallback || !db) return null;
+    return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code.toString().toUpperCase());
+  }
 
-    async function initAuthentication() {
-      if (useLocalFallback || !auth) {
-        return currentUser;
-      }
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          const cred = await signInWithCustomToken(auth, __initial_auth_token);
-          currentUser = cred.user;
-        } else {
-          const cred = await signInAnonymously(auth);
-          currentUser = cred.user;
-        }
-      } catch (e) {
-        console.warn("Auth initialization error, falling back to local session:", e);
-        useLocalFallback = true;
-      }
+  async function initAuthentication() {
+    if (useLocalFallback || !auth) {
       return currentUser;
     }
-
-    initAuthentication();
-
-    function saveLocalRoomState(code, roomData) {
-      try {
-        localStorage.setItem(`imposteur_room_${code}`, JSON.stringify(roomData));
-        if (localChannel) localChannel.postMessage({ type: 'ROOM_UPDATE', code, roomData });
-      } catch(e) { console.error("Local save error:", e); }
+    try {
+      if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
+        const cred = await signInWithCustomToken(auth, window.__initial_auth_token);
+        currentUser = cred.user;
+      } else {
+        const cred = await signInAnonymously(auth);
+        currentUser = cred.user;
+      }
+    } catch (e) {
+      console.warn("Auth initialization error, falling back to local session:", e);
+      useLocalFallback = true;
     }
+    return currentUser;
+  }
 
-    function getLocalRoomState(code) {
-      try {
-        const data = localStorage.getItem(`imposteur_room_${code}`);
-        return data ? JSON.parse(data) : null;
-      } catch(e) { return null; }
+  initAuthentication();
+
+  function saveLocalRoomState(code, roomData) {
+    try {
+      localStorage.setItem(`imposteur_room_${code}`, JSON.stringify(roomData));
+      if (localChannel) localChannel.postMessage({ type: 'ROOM_UPDATE', code, roomData });
+    } catch(e) { 
+      console.error("Local save error:", e); 
     }
+  }
 
-    window.createNewOnlineRoom = async function() {
+  function getLocalRoomState(code) {
+    try {
+      const data = localStorage.getItem(`imposteur_room_${code}`);
+      return data ? JSON.parse(data) : null;
+    } catch(e) { 
+      return null; 
+    }
+  }
+
+  // Bind to window explicitly for inline onclick handlers
+  window.createNewOnlineRoom = async function() {
+    try {
       await initAuthentication();
 
       const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
@@ -245,12 +93,15 @@
       gameState.isHost = true;
       gameState.myPlayerName = "Professeur (Hôte)";
 
+      const countEl = document.getElementById('impostor-count-select');
+      const impostorCount = countEl ? parseInt(countEl.value, 10) : 1;
+
       const roomData = {
         code: roomCode,
         status: 'LOBBY',
         hostId: currentUser.uid,
-        topicCategory: gameState.topicCategory,
-        impostorCount: parseInt(document.getElementById('impostor-count-select').value, 10),
+        topicCategory: gameState.topicCategory || 'rooms',
+        impostorCount: impostorCount,
         players: [{
           id: currentUser.uid,
           name: gameState.myPlayerName,
@@ -278,891 +129,312 @@
 
       listenToRoom(roomCode);
       showLobbyUI(roomCode, true);
-    };
+    } catch (err) {
+      console.error("Error creating room:", err);
+    }
+  };
 
-    window.joinRoomByCode = async function() {
-      await initAuthentication();
-      const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
-      const nameInput = document.getElementById('join-name-input').value.trim();
+  window.joinRoomByCode = async function() {
+    await initAuthentication();
+    const codeInput = document.getElementById('join-code-input').value.trim().toUpperCase();
+    const nameInput = document.getElementById('join-name-input').value.trim();
 
-      if (!codeInput || codeInput.length !== 4) {
-        alert("Veuillez entrer un code à 4 chiffres valide.");
-        return;
+    if (!codeInput || codeInput.length !== 4) {
+      alert("Veuillez entrer un code à 4 chiffres valide.");
+      return;
+    }
+    if (!nameInput) {
+      alert("Veuillez entrer votre prénom.");
+      return;
+    }
+
+    gameState.roomCode = codeInput;
+    gameState.isHost = false;
+    gameState.myPlayerName = nameInput;
+
+    let roomData = null;
+
+    if (!useLocalFallback && db) {
+      try {
+        const roomRef = getRoomDocRef(codeInput);
+        const snap = await getDoc(roomRef);
+        if (snap.exists()) {
+          roomData = snap.data();
+        }
+      } catch (err) {
+        console.warn("Cloud query failed, checking local storage:", err);
+        useLocalFallback = true;
       }
-      if (!nameInput) {
-        alert("Veuillez entrer votre prénom.");
-        return;
-      }
+    }
 
-      gameState.roomCode = codeInput;
-      gameState.isHost = false;
-      gameState.myPlayerName = nameInput;
+    if (!roomData) {
+      roomData = getLocalRoomState(codeInput);
+    }
 
-      let roomData = null;
+    if (!roomData) {
+      alert("Code de salle introuvable ! Vérifiez le code à 4 chiffres avec votre professeur.");
+      return;
+    }
+
+    if (roomData.status !== 'LOBBY') {
+      alert("La partie a déjà commencé dans cette salle.");
+      return;
+    }
+
+    const updatedPlayers = roomData.players || [];
+    if (!updatedPlayers.some(p => p.id === currentUser.uid)) {
+      updatedPlayers.push({
+        id: currentUser.uid,
+        name: nameInput,
+        isHost: false,
+        role: null
+      });
+      roomData.players = updatedPlayers;
 
       if (!useLocalFallback && db) {
         try {
-          const roomRef = getRoomDocRef(codeInput);
-          const snap = await getDoc(roomRef);
-          if (snap.exists()) {
-            roomData = snap.data();
-          }
-        } catch (err) {
-          console.warn("Cloud query failed, checking local storage:", err);
+          await updateDoc(getRoomDocRef(codeInput), { players: updatedPlayers });
+        } catch(e) {
           useLocalFallback = true;
-        }
-      }
-
-      if (!roomData) {
-        roomData = getLocalRoomState(codeInput);
-      }
-
-      if (!roomData) {
-        alert("Code de salle introuvable ! Vérifiez le code à 4 chiffres avec votre professeur.");
-        return;
-      }
-
-      if (roomData.status !== 'LOBBY') {
-        alert("La partie a déjà commencé dans cette salle.");
-        return;
-      }
-
-      const updatedPlayers = roomData.players || [];
-      if (!updatedPlayers.some(p => p.id === currentUser.uid)) {
-        updatedPlayers.push({
-          id: currentUser.uid,
-          name: nameInput,
-          isHost: false,
-          role: null
-        });
-        roomData.players = updatedPlayers;
-
-        if (!useLocalFallback && db) {
-          try {
-            await updateDoc(getRoomDocRef(codeInput), { players: updatedPlayers });
-          } catch(e) {
-            useLocalFallback = true;
-            saveLocalRoomState(codeInput, roomData);
-          }
-        } else {
           saveLocalRoomState(codeInput, roomData);
         }
-      }
-
-      listenToRoom(codeInput);
-      showLobbyUI(codeInput, false);
-      syncGameStateFromFirebase(roomData);
-    };
-
-    function listenToRoom(code) {
-      if (roomUnsubscribe) {
-        roomUnsubscribe();
-        roomUnsubscribe = null;
-      }
-
-      if (!useLocalFallback && db) {
-        const roomRef = getRoomDocRef(code);
-        try {
-          roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
-            if (!snapshot.exists()) return;
-            const data = snapshot.data();
-            syncGameStateFromFirebase(data);
-          }, (error) => {
-            console.warn("Room snapshot error, falling back to local listener:", error);
-            useLocalFallback = true;
-            listenLocalRoom(code);
-          });
-          return;
-        } catch(e) {
-          useLocalFallback = true;
-        }
-      }
-
-      listenLocalRoom(code);
-    }
-
-    function listenLocalRoom(code) {
-      const initialData = getLocalRoomState(code);
-      if (initialData) syncGameStateFromFirebase(initialData);
-
-      if (localChannel) {
-        localChannel.onmessage = (event) => {
-          if (event.data && event.data.code === code && event.data.roomData) {
-            syncGameStateFromFirebase(event.data.roomData);
-          }
-        };
-      }
-
-      // Polling fallback in case BroadcastChannel isn't supported across distinct contexts
-      if (!window.localRoomInterval) {
-        window.localRoomInterval = setInterval(() => {
-          if (gameState.roomCode) {
-            const latest = getLocalRoomState(gameState.roomCode);
-            if (latest) syncGameStateFromFirebase(latest);
-          }
-        }, 1000);
-      }
-    }
-
-    async function updateRoomState(updateObject) {
-      const code = gameState.roomCode;
-      if (!code) return;
-
-      if (!useLocalFallback && db) {
-        try {
-          await updateDoc(getRoomDocRef(code), updateObject);
-          return;
-        } catch(e) {
-          console.warn("Failed to update cloud, using local state update:", e);
-          useLocalFallback = true;
-        }
-      }
-
-      const localData = getLocalRoomState(code) || {};
-      const updatedData = { ...localData, ...updateObject };
-      saveLocalRoomState(code, updatedData);
-      syncGameStateFromFirebase(updatedData);
-    }
-
-    function syncGameStateFromFirebase(data) {
-      gameState.playerNames = (data.players || []).map(p => p.name);
-      gameState.impostorCount = data.impostorCount || 1;
-
-      const countEl = document.getElementById('lobby-player-count');
-      if (countEl) countEl.innerText = data.players.length;
-
-      const grid = document.getElementById('lobby-players-grid');
-      if (grid) {
-        grid.innerHTML = (data.players || []).map(p => `
-          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-            <span class="font-bold text-white truncate">${p.name}</span>
-            ${p.isHost ? '<span class="text-[9px] bg-indigo-900 text-indigo-300 px-1.5 py-0.5 rounded">Hôte</span>' : '✅'}
-          </div>
-        `).join('');
-      }
-
-      if (data.status === 'REVEAL') {
-        gameState.secretRoom = data.secretRoom;
-        gameState.secretActivity = data.secretActivity;
-        
-        const me = (data.players || []).find(p => p.id === (currentUser ? currentUser.uid : ''));
-        const isImpostor = me ? me.role === 'impostor' : false;
-
-        document.getElementById('game-lobby-view').classList.add('hidden');
-        document.getElementById('game-reveal-view').classList.remove('hidden');
-
-        document.getElementById('reveal-player-name').innerText = gameState.myPlayerName;
-        document.getElementById('card-back-player-title').innerText = gameState.myPlayerName;
-
-        const roleBox = document.getElementById('role-display-content');
-        if (isImpostor) {
-          roleBox.innerHTML = `
-            <div class="space-y-2">
-              <span class="text-5xl">🕵️</span>
-              <h4 class="text-2xl font-black text-red-500 tracking-wide">TU ES L'IMPOSTEUR !</h4>
-              <p class="text-xs text-slate-300">
-                Tu n'as pas le mot secret. Écoute les indices des autres élèves et fais semblant de connaître la pièce !
-              </p>
-            </div>
-          `;
-        } else {
-          roleBox.innerHTML = `
-            <div class="space-y-3">
-              <span class="text-5xl">${gameState.secretRoom ? gameState.secretRoom.icon : '🏠'}</span>
-              <div>
-                <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Tu es Innocent • Ton Mot Secret :</span>
-                <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom ? gameState.secretRoom.name : 'La pièce'}</h4>
-                <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity || ''}</span></p>
-              </div>
-            </div>
-          `;
-        }
-      } else if (data.status === 'DISCUSSION') {
-        document.getElementById('game-reveal-view').classList.add('hidden');
-        document.getElementById('game-discussion-view').classList.remove('hidden');
-        renderDiscussionPlayers();
-      } else if (data.status === 'VOTING') {
-        document.getElementById('game-discussion-view').classList.add('hidden');
-        document.getElementById('game-voting-view').classList.remove('hidden');
-        renderOnlineVotingPlayers();
-      } else if (data.status === 'RESULTS') {
-        gameState.selectedSuspectIndex = data.selectedSuspectIndex;
-        document.getElementById('game-voting-view').classList.add('hidden');
-        document.getElementById('game-results-view').classList.remove('hidden');
-        renderResultsView(data);
-      }
-    }
-
-    window.startOnlineGameHost = async function() {
-      if (!gameState.roomCode) return;
-      
-      let data = useLocalFallback ? getLocalRoomState(gameState.roomCode) : null;
-      if (!data && db) {
-        const snap = await getDoc(getRoomDocRef(gameState.roomCode));
-        if (snap.exists()) data = snap.data();
-      }
-      if (!data) return;
-
-      const players = data.players || [];
-      if (players.length < 2) {
-        alert("Il faut au moins 2 joueurs pour démarrer la partie !");
-        return;
-      }
-
-      const randomRoom = ROOMS_DATA[Math.floor(Math.random() * ROOMS_DATA.length)];
-      const randomActivity = randomRoom.activities[Math.floor(Math.random() * randomRoom.activities.length)];
-
-      const playerIndices = Array.from({ length: players.length }, (_, i) => i);
-      for (let i = playerIndices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [playerIndices[i], playerIndices[j]] = [playerIndices[j], playerIndices[i]];
-      }
-      const impostorIndices = playerIndices.slice(0, data.impostorCount || 1);
-
-      const assignedPlayers = players.map((p, idx) => ({
-        ...p,
-        role: impostorIndices.includes(idx) ? 'impostor' : 'innocent'
-      }));
-
-      await updateRoomState({
-        status: 'REVEAL',
-        secretRoom: randomRoom,
-        secretActivity: randomActivity,
-        players: assignedPlayers
-      });
-    };
-
-    window.proceedToDiscussion = async function() {
-      if (gameState.roomCode) {
-        await updateRoomState({ status: 'DISCUSSION' });
       } else {
-        document.getElementById('game-reveal-view').classList.add('hidden');
-        document.getElementById('game-discussion-view').classList.remove('hidden');
-        renderDiscussionPlayers();
+        saveLocalRoomState(codeInput, roomData);
       }
-    };
-
-    window.goToVotingStage = async function() {
-      if (gameState.roomCode) {
-        await updateRoomState({ status: 'VOTING' });
-      } else {
-        document.getElementById('game-discussion-view').classList.add('hidden');
-        document.getElementById('game-voting-view').classList.remove('hidden');
-        renderOnlineVotingPlayers();
-      }
-    };
-
-    function renderOnlineVotingPlayers() {
-      const container = document.getElementById('voting-players-container');
-      if (!container) return;
-      container.innerHTML = '';
-
-      gameState.playerNames.forEach((name, idx) => {
-        const row = document.createElement('div');
-        row.className = 'bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between';
-        row.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">
-              ${idx + 1}
-            </span>
-            <span class="font-bold text-sm text-white">${name}</span>
-          </div>
-          <button onclick="castVoteForPlayer(${idx}, this)" class="vote-target-btn py-1.5 px-4 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:border-red-500 hover:text-white transition">
-            <i class="fa-solid fa-bullseye"></i> Suspecter
-          </button>
-        `;
-        container.appendChild(row);
-      });
     }
 
-    window.tallyVotesAndReveal = async function() {
-      const suspectIdx = gameState.selectedSuspectIndex !== undefined ? gameState.selectedSuspectIndex : 0;
-      if (gameState.roomCode) {
-        await updateRoomState({
-          status: 'RESULTS',
-          selectedSuspectIndex: suspectIdx
+    listenToRoom(codeInput);
+    showLobbyUI(codeInput, false);
+    syncGameStateFromFirebase(roomData);
+  };
+
+  function listenToRoom(code) {
+    if (roomUnsubscribe) {
+      roomUnsubscribe();
+      roomUnsubscribe = null;
+    }
+
+    if (!useLocalFallback && db) {
+      const roomRef = getRoomDocRef(code);
+      try {
+        roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data();
+          syncGameStateFromFirebase(data);
+        }, (error) => {
+          console.warn("Room snapshot error, falling back to local listener:", error);
+          useLocalFallback = true;
+          listenLocalRoom(code);
         });
-      } else {
-        renderResultsView();
-      }
-    };
-
-    function renderResultsView(data = null) {
-      const suspectIdx = gameState.selectedSuspectIndex !== undefined ? gameState.selectedSuspectIndex : 0;
-      const suspectName = gameState.playerNames[suspectIdx] || "Un élève";
-
-      const roomRef = data || gameState;
-      const innocentWord = roomRef.secretRoom ? `${roomRef.secretRoom.name} (${roomRef.secretActivity})` : "La cuisine";
-
-      const banner = document.getElementById('results-banner');
-      if (banner) {
-        banner.className = 'p-6 rounded-3xl border border-indigo-500/50 bg-indigo-950/40 space-y-3';
-        banner.innerHTML = `
-          <div class="text-5xl">🔍</div>
-          <h3 class="text-2xl font-black text-white">FIN DE LA PARTIE</h3>
-          <p class="text-xs text-slate-200">
-            Vous avez accusé <strong>${suspectName}</strong> !
-          </p>
-        `;
-      }
-
-      const resInnocentWord = document.getElementById('res-innocent-word');
-      const resImpostorName = document.getElementById('res-impostor-name');
-      if (resInnocentWord) resInnocentWord.innerText = innocentWord;
-      if (resImpostorName) resImpostorName.innerText = "Révélé dans la salle !";
-    }
-
-    function showLobbyUI(code, isHost) {
-      document.getElementById('game-setup-view').classList.add('hidden');
-      document.getElementById('game-lobby-view').classList.remove('hidden');
-
-      document.getElementById('room-code-badge').classList.remove('hidden');
-      document.getElementById('active-room-display').innerText = code;
-      document.getElementById('lobby-code-display').innerText = code;
-
-      if (isHost) {
-        document.getElementById('host-start-btn').classList.remove('hidden');
-        document.getElementById('host-start-btn').classList.add('flex');
-        document.getElementById('student-waiting-notice').classList.add('hidden');
-      } else {
-        document.getElementById('host-start-btn').classList.add('hidden');
-        document.getElementById('student-waiting-notice').classList.remove('hidden');
-      }
-    }
-  </script>
-
-  <!-- Vocabulary & Game Data Helper Scripts -->
-  <script>
-    const ROOMS_DATA = [
-      {
-        id: 'cuisine',
-        name: 'La cuisine',
-        translation: 'The kitchen',
-        icon: '🍳',
-        activities: ['cuisiner', 'préparer le repas', 'faire la vaisselle', 'cuire un gâteau', 'manger un en-cas'],
-        items: ['le four', 'le réfrigérateur', 'les casseroles', 'l\'évier'],
-        clueExamples: [
-          'On y trouve souvent de la nourriture et un four.',
-          'C\'est un endroit chaud où on prépare le dîner.',
-          'J\'y vais plusieurs fois par jour quand j\'ai faim.'
-        ]
-      },
-      {
-        id: 'chambre',
-        name: 'La chambre',
-        translation: 'The bedroom',
-        icon: '🛏️',
-        activities: ['dormir', 'faire son lit', 'ranger ses vêtements', 'lire un livre', 'se reposer'],
-        items: ['le lit', 'l\'armoire', 'l\'oreiller', 'la lampe de chevet'],
-        clueExamples: [
-          'C\'est une pièce très calme où il y a un lit.',
-          'On y va d\'habitude le soir pour se reposer.',
-          'C\'est mon endroit préféré pour lire un livre en paix.'
-        ]
-      },
-      {
-        id: 'salle_de_bains',
-        name: 'La salle de bains',
-        translation: 'The bathroom',
-        icon: '🚿',
-        activities: ['se laver les mains', 'prendre une douche', 'se brosser les dents', 'se coiffer'],
-        items: ['la douche', 'le savon', 'la serviette', 'le miroir'],
-        clueExamples: [
-          'Il y a de l\'eau, du savon et un grand miroir.',
-          'On y passe du temps le matin pour se préparer.',
-          'C\'est là qu\'on se brosse les dents.'
-        ]
-      },
-      {
-        id: 'salon',
-        name: 'Le salon',
-        translation: 'The living room',
-        icon: '🛋️',
-        activities: ['regarder la télévision', 'se détendre sur le canapé', 'écouter de la musique', 'discuter en famille'],
-        items: ['le canapé', 'la télévision', 'la table basse', 'le fauteuil'],
-        clueExamples: [
-          'C\'est une pièce confortable avec un grand canapé.',
-          'Toute la famille s\'y réunit pour regarder un film.',
-          'On s\'y détend après une longue journée.'
-        ]
-      },
-      {
-        id: 'salle_a_manger',
-        name: 'La salle à manger',
-        translation: 'The dining room',
-        icon: '🍽️',
-        activities: ['manger le dîner', 'mettre la table', 'débarrasser les assiettes', 'fêter un anniversaire'],
-        items: ['la grande table', 'les chaises', 'la vaisselle', 'la nappe'],
-        clueExamples: [
-          'On s\'assoit autour d\'une table pour partager le repas.',
-          'On y met la table avant de manger ensemble.',
-          'C\'est la pièce officielle pour les repas de fête.'
-        ]
-      },
-      {
-        id: 'jardin',
-        name: 'Le jardin',
-        translation: 'The garden / yard',
-        icon: '🌳',
-        activities: ['jouer au ballon', 'planter des fleurs', 'arroser les plantes', 'faire un barbecue'],
-        items: ['l\'herbe', 'les fleurs', 'l\'arrosoir', 'les arbres'],
-        clueExamples: [
-          'C\'est un espace extérieur avec de l\'herbe et des plantes.',
-          'J\'aime y jouer au ballon quand il fait beau.',
-          'On y entend souvent chanter les oiseaux.'
-        ]
-      },
-      {
-        id: 'garage',
-        name: 'Le garage',
-        translation: 'The garage',
-        icon: '🚗',
-        activities: ['garer la voiture', 'réparer un vélo', 'ranger des outils', 'bricoler'],
-        items: ['la voiture', 'les outils', 'le vélo', 'les cartons'],
-        clueExamples: [
-          'On y garde la voiture et des outils de bricolage.',
-          'C\'est souvent un endroit un peu sombre et frais.',
-          'J\'y mets mon vélo quand je rentre de l\'école.'
-        ]
-      },
-      {
-        id: 'bureau',
-        name: 'Le bureau',
-        translation: 'The study / office',
-        icon: '💻',
-        activities: ['faire ses devoirs', 'travailler sur l\'ordinateur', 'écrire une lettre', 'étudier'],
-        items: ['l\'ordinateur', 'la chaise de bureau', 'les crayons', 'les livres'],
-        clueExamples: [
-          'On y trouve un ordinateur et des livres pour étudier.',
-          'C\'est là qu\'on fait ses devoirs en toute tranquillité.',
-          'Il y a beaucoup de stylos et de papier ici.'
-        ]
-      }
-    ];
-
-    const SENTENCE_STARTERS = [
-      {
-        id: 1,
-        category: 'clues',
-        categoryLabel: 'Indice (Giving Clue)',
-        french: "Dans cette pièce, d'habitude on...",
-        english: "In this room, usually we...",
-        type: 'ind'
-      },
-      {
-        id: 2,
-        category: 'clues',
-        categoryLabel: 'Indice (Giving Clue)',
-        french: "On y trouve souvent du/de la/des...",
-        english: "We often find ... here.",
-        type: 'ind'
-      },
-      {
-        id: 3,
-        category: 'clues',
-        categoryLabel: 'Indice (Giving Clue)',
-        french: "C'est un endroit parfait pour...",
-        english: "It's a perfect place to...",
-        type: 'ind'
-      },
-      {
-        id: 4,
-        category: 'clues',
-        categoryLabel: 'Indice (Giving Clue)',
-        french: "Pour faire cette activité, on utilise...",
-        english: "To do this activity, we use...",
-        type: 'ind'
-      },
-      {
-        id: 5,
-        category: 'questions',
-        categoryLabel: 'Question (Asking)',
-        french: "Est-ce qu'on utilise de l'eau dans cet endroit ?",
-        english: "Do we use water in this place?",
-        type: 'que'
-      },
-      {
-        id: 6,
-        category: 'questions',
-        categoryLabel: 'Question (Asking)',
-        french: "Est-ce qu'on y va plutôt le matin ou le soir ?",
-        english: "Do we go there in the morning or evening?",
-        type: 'que'
-      },
-      {
-        id: 7,
-        category: 'accusations',
-        categoryLabel: 'Accusation (Accusing)',
-        french: "Je trouve que [Nom] est suspect parce que...",
-        english: "I think [Name] is suspicious because...",
-        type: 'acc'
-      },
-      {
-        id: 8,
-        category: 'accusations',
-        categoryLabel: 'Accusation (Accusing)',
-        french: "Ton indice est trop vague / bizarre !",
-        english: "Your clue is too vague / weird!",
-        type: 'acc'
-      },
-      {
-        id: 9,
-        category: 'defense',
-        categoryLabel: 'Défense (Defending)',
-        french: "Je vous jure que je suis un vrai innocent !",
-        english: "I swear I am a real innocent!",
-        type: 'def'
-      },
-      {
-        id: 10,
-        category: 'defense',
-        categoryLabel: 'Défense (Defending)',
-        french: "J'ai dit ça parce que dans ma maison...",
-        english: "I said that because in my house...",
-        type: 'def'
-      }
-    ];
-
-    let gameState = {
-      mode: 'group',
-      topicCategory: 'rooms',
-      playerNames: ['Pierre', 'Sophie', 'Thomas', 'Lucas'],
-      impostorCount: 1,
-      secretRoom: null,
-      secretActivity: null,
-      impostorIndices: [],
-      currentRevealIndex: 0,
-      votes: {}
-    };
-
-    let audioEnabled = true;
-
-    window.addEventListener('DOMContentLoaded', () => {
-      renderPlayerInputFields(4);
-      renderStartersGrid();
-      renderVocabCards();
-    });
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn, .mob-nav-btn').forEach(btn => {
-        btn.classList.remove('bg-indigo-600', 'text-white', 'text-indigo-400');
-        btn.classList.add('text-slate-300', 'text-slate-400');
-      });
-
-      const activeTab = document.getElementById(`tab-${tabId}`);
-      if (activeTab) activeTab.classList.remove('hidden');
-
-      const desktopNavBtn = document.getElementById(`nav-${tabId}`);
-      if (desktopNavBtn) {
-        desktopNavBtn.classList.add('bg-indigo-600', 'text-white');
-        desktopNavBtn.classList.remove('text-slate-300');
-      }
-
-      const mobNavBtn = document.getElementById(`nav-mob-${tabId}`);
-      if (mobNavBtn) {
-        mobNavBtn.classList.add('text-indigo-400');
-        mobNavBtn.classList.remove('text-slate-400');
+        return;
+      } catch(e) {
+        useLocalFallback = true;
       }
     }
 
-    function toggleAudioEngine() {
-      audioEnabled = !audioEnabled;
-      const icon = document.getElementById('audio-icon');
-      const label = document.getElementById('audio-status-label');
-      if (audioEnabled) {
-        if (icon) icon.className = 'fa-solid fa-volume-high text-emerald-400';
-        if (label) label.innerText = 'Audio: ON';
-      } else {
-        if (icon) icon.className = 'fa-solid fa-volume-xmark text-slate-500';
-        if (label) label.innerText = 'Audio: OFF';
+    listenLocalRoom(code);
+  }
+
+  function listenLocalRoom(code) {
+    const initialData = getLocalRoomState(code);
+    if (initialData) syncGameStateFromFirebase(initialData);
+
+    if (localChannel) {
+      localChannel.onmessage = (event) => {
+        if (event.data && event.data.code === code && event.data.roomData) {
+          syncGameStateFromFirebase(event.data.roomData);
+        }
+      };
+    }
+
+    if (!window.localRoomInterval) {
+      window.localRoomInterval = setInterval(() => {
+        if (gameState.roomCode) {
+          const latest = getLocalRoomState(gameState.roomCode);
+          if (latest) syncGameStateFromFirebase(latest);
+        }
+      }, 1000);
+    }
+  }
+
+  async function updateRoomState(updateObject) {
+    const code = gameState.roomCode;
+    if (!code) return;
+
+    if (!useLocalFallback && db) {
+      try {
+        await updateDoc(getRoomDocRef(code), updateObject);
+        return;
+      } catch(e) {
+        console.warn("Failed to update cloud, using local state update:", e);
+        useLocalFallback = true;
       }
     }
 
-    function speakFrenchText(text) {
-      if (!audioEnabled || !text) return;
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'fr-FR';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      }
+    const localData = getLocalRoomState(code) || {};
+    const updatedData = { ...localData, ...updateObject };
+    saveLocalRoomState(code, updatedData);
+    syncGameStateFromFirebase(updatedData);
+  }
+
+  function syncGameStateFromFirebase(data) {
+    gameState.playerNames = (data.players || []).map(p => p.name);
+    gameState.impostorCount = data.impostorCount || 1;
+
+    const countEl = document.getElementById('lobby-player-count');
+    if (countEl) countEl.innerText = data.players.length;
+
+    const grid = document.getElementById('lobby-players-grid');
+    if (grid) {
+      grid.innerHTML = (data.players || []).map(p => `
+        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+          <span class="font-bold text-white truncate">${p.name}</span>
+          ${p.isHost ? '<span class="text-[9px] bg-indigo-900 text-indigo-300 px-1.5 py-0.5 rounded">Hôte</span>' : '✅'}
+        </div>
+      `).join('');
     }
 
-    function selectGameMode(mode) {
-      gameState.mode = mode;
-      const studentBox = document.getElementById('student-join-box');
-      const hostBox = document.getElementById('host-config-box');
-      if (studentBox) studentBox.classList.add('hidden');
-      if (hostBox) hostBox.classList.add('hidden');
+    if (data.status === 'REVEAL') {
+      gameState.secretRoom = data.secretRoom;
+      gameState.secretActivity = data.secretActivity;
+      
+      const me = (data.players || []).find(p => p.id === (currentUser ? currentUser.uid : ''));
+      const isImpostor = me ? me.role === 'impostor' : false;
 
-      if (mode === 'join') {
-        if (studentBox) studentBox.classList.remove('hidden');
-      } else if (mode === 'host') {
-        if (hostBox) hostBox.classList.remove('hidden');
-      } else {
-        gameState.playerNames = ['Vous (Joueur)', 'Madame Claire (IA)', 'Antoine (IA)', 'Élodie (IA)'];
-        gameState.impostorCount = 1;
-        startGroupGame();
-      }
-    }
-
-    function cancelSetup() {
-      const studentBox = document.getElementById('student-join-box');
-      const hostBox = document.getElementById('host-config-box');
-      if (studentBox) studentBox.classList.add('hidden');
-      if (hostBox) hostBox.classList.add('hidden');
-    }
-
-    function setTopicCategory(cat) {
-      gameState.topicCategory = cat;
-      document.querySelectorAll('.topic-btn').forEach(btn => {
-        btn.classList.remove('border-indigo-500', 'bg-indigo-950/60', 'text-indigo-200');
-        btn.classList.add('border-slate-800', 'bg-slate-950', 'text-slate-400');
-      });
-      const activeBtn = document.getElementById(`topic-${cat}`);
-      if (activeBtn) {
-        activeBtn.classList.remove('border-slate-800', 'bg-slate-950', 'text-slate-400');
-        activeBtn.classList.add('border-indigo-500', 'bg-indigo-950/60', 'text-indigo-200');
-      }
-    }
-
-    function renderPlayerInputFields(count) {
-      const container = document.getElementById('player-names-container');
-      if (!container) return; // Defensive null guard
-      container.innerHTML = '';
-      const defaultNames = ['Pierre', 'Sophie', 'Thomas', 'Lucas', 'Chloé', 'Manon', 'Hugo', 'Camille'];
-      for (let i = 0; i < count; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'player-name-input bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500';
-        input.value = defaultNames[i] || `Élève ${i + 1}`;
-        container.appendChild(input);
-      }
-    }
-
-    function startGroupGame() {
-      const randomIndex = Math.floor(Math.random() * ROOMS_DATA.length);
-      gameState.secretRoom = ROOMS_DATA[randomIndex];
-      const randomActIdx = Math.floor(Math.random() * gameState.secretRoom.activities.length);
-      gameState.secretActivity = gameState.secretRoom.activities[randomActIdx];
-
-      const totalPlayers = gameState.playerNames.length;
-      const indices = Array.from({ length: totalPlayers }, (_, i) => i);
-      for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
-      }
-      gameState.impostorIndices = indices.slice(0, gameState.impostorCount);
-      gameState.currentRevealIndex = 0;
-
-      document.getElementById('game-setup-view').classList.add('hidden');
+      document.getElementById('game-lobby-view').classList.add('hidden');
       document.getElementById('game-reveal-view').classList.remove('hidden');
 
-      updateCardRevealUI();
-    }
+      document.getElementById('reveal-player-name').innerText = gameState.myPlayerName;
+      document.getElementById('card-back-player-title').innerText = gameState.myPlayerName;
 
-    function updateCardRevealUI() {
-      const total = gameState.playerNames.length;
-      const idx = gameState.currentRevealIndex;
-
-      document.getElementById('reveal-progress-label').innerText = `Élève ${idx + 1} sur ${total}`;
-      document.getElementById('reveal-player-name').innerText = gameState.playerNames[idx];
-      document.getElementById('card-back-player-title').innerText = gameState.playerNames[idx];
-
-      const cardContainer = document.getElementById('secret-card-container');
-      cardContainer.classList.remove('flipped');
-
-      const isImpostor = gameState.impostorIndices.includes(idx);
       const roleBox = document.getElementById('role-display-content');
-
       if (isImpostor) {
         roleBox.innerHTML = `
           <div class="space-y-2">
             <span class="text-5xl">🕵️</span>
             <h4 class="text-2xl font-black text-red-500 tracking-wide">TU ES L'IMPOSTEUR !</h4>
             <p class="text-xs text-slate-300">
-              Tu n'as pas le mot secret. Écoute les indices des autres et fais semblant de connaître la pièce !
+              Tu n'as pas le mot secret. Écoute les indices des autres élèves et fais semblant de connaître la pièce !
             </p>
           </div>
         `;
       } else {
         roleBox.innerHTML = `
           <div class="space-y-3">
-            <span class="text-5xl">${gameState.secretRoom.icon}</span>
+            <span class="text-5xl">${gameState.secretRoom ? gameState.secretRoom.icon : '🏠'}</span>
             <div>
               <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Tu es Innocent • Ton Mot Secret :</span>
-              <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom.name}</h4>
-              <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity}</span></p>
+              <h4 class="text-2xl font-black text-white mt-1">${gameState.secretRoom ? gameState.secretRoom.name : 'La pièce'}</h4>
+              <p class="text-xs text-indigo-300 mt-1">Activité : <span class="text-white font-semibold">${gameState.secretActivity || ''}</span></p>
             </div>
           </div>
         `;
       }
+    } else if (data.status === 'DISCUSSION') {
+      document.getElementById('game-reveal-view').classList.add('hidden');
+      document.getElementById('game-discussion-view').classList.remove('hidden');
+      renderDiscussionPlayers();
+    } else if (data.status === 'VOTING') {
+      document.getElementById('game-discussion-view').classList.add('hidden');
+      document.getElementById('game-voting-view').classList.remove('hidden');
+      renderOnlineVotingPlayers();
+    } else if (data.status === 'RESULTS') {
+      gameState.selectedSuspectIndex = data.selectedSuspectIndex;
+      document.getElementById('game-voting-view').classList.add('hidden');
+      document.getElementById('game-results-view').classList.remove('hidden');
+      renderResultsView(data);
+    }
+  }
+
+  window.startOnlineGameHost = async function() {
+    if (!gameState.roomCode) return;
+    
+    let data = useLocalFallback ? getLocalRoomState(gameState.roomCode) : null;
+    if (!data && db) {
+      const snap = await getDoc(getRoomDocRef(gameState.roomCode));
+      if (snap.exists()) data = snap.data();
+    }
+    if (!data) return;
+
+    const players = data.players || [];
+    if (players.length < 2) {
+      alert("Il faut au moins 2 joueurs pour démarrer la partie !");
+      return;
     }
 
-    function toggleCardFlip() {
-      const cardContainer = document.getElementById('secret-card-container');
-      if (cardContainer) cardContainer.classList.toggle('flipped');
+    const randomRoom = ROOMS_DATA[Math.floor(Math.random() * ROOMS_DATA.length)];
+    const randomActivity = randomRoom.activities[Math.floor(Math.random() * randomRoom.activities.length)];
+
+    const playerIndices = Array.from({ length: players.length }, (_, i) => i);
+    for (let i = playerIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [playerIndices[i], playerIndices[j]] = [playerIndices[j], playerIndices[i]];
     }
+    const impostorIndices = playerIndices.slice(0, data.impostorCount || 1);
 
-    function renderDiscussionPlayers() {
-      const container = document.getElementById('discussion-players-grid');
-      if (!container) return;
-      container.innerHTML = '';
+    const assignedPlayers = players.map((p, idx) => ({
+      ...p,
+      role: impostorIndices.includes(idx) ? 'impostor' : 'innocent'
+    }));
 
-      gameState.playerNames.forEach((name, idx) => {
-        const div = document.createElement('div');
-        div.className = 'bg-slate-900 border border-slate-800 p-3 rounded-xl flex flex-col items-center text-center space-y-2';
-        div.innerHTML = `
-          <div class="w-10 h-10 rounded-full bg-indigo-900/50 border border-indigo-700/60 flex items-center justify-center font-bold text-white text-sm">
-            ${idx + 1}
-          </div>
-          <div>
-            <div class="font-bold text-xs text-white">${name}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Élève ${idx + 1}</div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
+    await updateRoomState({
+      status: 'REVEAL',
+      secretRoom: randomRoom,
+      secretActivity: randomActivity,
+      players: assignedPlayers
+    });
+  };
+
+  window.proceedToDiscussion = async function() {
+    if (gameState.roomCode) {
+      await updateRoomState({ status: 'DISCUSSION' });
+    } else {
+      document.getElementById('game-reveal-view').classList.add('hidden');
+      document.getElementById('game-discussion-view').classList.remove('hidden');
+      renderDiscussionPlayers();
     }
+  };
 
-    function insertClueStarter(text) {
-      const input = document.getElementById('clue-builder-input');
-      if (input) input.value = text;
-      speakFrenchText(text);
+  window.goToVotingStage = async function() {
+    if (gameState.roomCode) {
+      await updateRoomState({ status: 'VOTING' });
+    } else {
+      document.getElementById('game-discussion-view').classList.add('hidden');
+      document.getElementById('game-voting-view').classList.remove('hidden');
+      renderOnlineVotingPlayers();
     }
+  };
 
-    function speakCurrentClueInput() {
-      const input = document.getElementById('clue-builder-input');
-      if (input) speakFrenchText(input.value);
+  function showLobbyUI(code, isHost) {
+    document.getElementById('game-setup-view').classList.add('hidden');
+    document.getElementById('game-lobby-view').classList.remove('hidden');
+
+    document.getElementById('room-code-badge').classList.remove('hidden');
+    document.getElementById('active-room-display').innerText = code;
+    document.getElementById('lobby-code-display').innerText = code;
+
+    if (isHost) {
+      document.getElementById('host-start-btn').classList.remove('hidden');
+      document.getElementById('host-start-btn').classList.add('flex');
+      document.getElementById('student-waiting-notice').classList.add('hidden');
+    } else {
+      document.getElementById('host-start-btn').classList.add('hidden');
+      document.getElementById('student-waiting-notice').classList.remove('hidden');
     }
+  }
+</script>
+Step 2: Ensure gameState Object Exists
+Check the bottom <script> block in your file to ensure gameState is initialized before the module script runs. Define it cleanly like this:
 
-    function castVoteForPlayer(playerIdx, btn) {
-      document.querySelectorAll('.vote-target-btn').forEach(b => {
-        b.className = 'vote-target-btn py-1.5 px-4 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:border-red-500 hover:text-white transition';
-        b.innerHTML = '<i class="fa-solid fa-bullseye"></i> Suspecter';
-      });
-
-      btn.className = 'vote-target-btn py-1.5 px-4 rounded-lg bg-red-600 text-white font-bold text-xs shadow';
-      btn.innerHTML = '<i class="fa-solid fa-check"></i> Désigné comme Imposteur';
-      gameState.selectedSuspectIndex = playerIdx;
-    }
-
-    function restartSameGame() {
-      document.getElementById('game-results-view').classList.add('hidden');
-      startGroupGame();
-    }
-
-    function backToSetup() {
-      document.getElementById('game-results-view').classList.add('hidden');
-      document.getElementById('game-setup-view').classList.remove('hidden');
-    }
-
-    function renderStartersGrid(filter = 'all') {
-      const container = document.getElementById('starters-container');
-      if (!container) return; // Defensive null guard
-      container.innerHTML = '';
-
-      const filtered = filter === 'all' 
-        ? SENTENCE_STARTERS 
-        : SENTENCE_STARTERS.filter(s => s.category === filter);
-
-      filtered.forEach(starter => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-4 transition shadow-md flex flex-col justify-between space-y-3';
-        
-        card.innerHTML = `
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-purple-300 uppercase">
-                ${starter.categoryLabel}
-              </span>
-              <button onclick="speakFrenchText('${starter.french.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-full bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white flex items-center justify-center transition">
-                <i class="fa-solid fa-volume-high text-xs"></i>
-              </button>
-            </div>
-            <p class="text-sm font-bold text-white leading-snug">"${starter.french}"</p>
-            <p class="text-xs text-slate-400 italic">${starter.english}</p>
-          </div>
-          <button onclick="insertClueStarter('${starter.french.replace(/'/g, "\\'")}'); switchTab('game');" class="w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 hover:text-white hover:border-indigo-500 transition text-center font-medium">
-            Utiliser dans la partie &rarr;
-          </button>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function filterStarters(category) {
-      document.querySelectorAll('.starter-filter-btn').forEach(btn => {
-        btn.classList.remove('bg-purple-600', 'text-white');
-        btn.classList.add('bg-slate-800', 'text-slate-300');
-      });
-      if (event && event.target) {
-        event.target.classList.remove('bg-slate-800', 'text-slate-300');
-        event.target.classList.add('bg-purple-600', 'text-white');
-      }
-      renderStartersGrid(category);
-    }
-
-    function renderVocabCards() {
-      const container = document.getElementById('vocab-cards-grid');
-      if (!container) return; // Defensive null guard
-      container.innerHTML = '';
-
-      ROOMS_DATA.forEach(room => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 hover:border-emerald-500/40 transition shadow-lg';
-        
-        const activitiesList = room.activities.map(act => `<li class="flex items-center gap-2"><span class="text-emerald-400">•</span> ${act}</li>`).join('');
-        const itemsList = room.items.map(it => `<span class="bg-slate-950 text-slate-300 text-[10px] px-2 py-1 rounded border border-slate-800">${it}</span>`).join(' ');
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div class="flex items-center gap-3">
-              <span class="text-3xl">${room.icon}</span>
-              <div>
-                <h3 class="font-bold text-base text-white">${room.name}</h3>
-                <span class="text-xs text-slate-400 italic">${room.translation}</span>
-              </div>
-            </div>
-            <button onclick="speakFrenchText('${room.name}')" class="p-2 rounded-lg bg-slate-800 text-emerald-400 hover:bg-emerald-600 hover:text-white transition">
-              <i class="fa-solid fa-volume-high text-xs"></i>
-            </button>
-          </div>
-
-          <div class="space-y-1">
-            <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">Activités (Verbes & Actions) :</span>
-            <ul class="text-xs text-slate-300 space-y-1 pl-1">
-              ${activitiesList}
-            </ul>
-          </div>
-
-          <div class="space-y-1 pt-2 border-t border-slate-800">
-            <span class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider block">Objets & Meubles :</span>
-            <div class="flex flex-wrap gap-1 mt-1">
-              ${itemsList}
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // Expose helpers globally
-    window.switchTab = switchTab;
-    window.toggleAudioEngine = toggleAudioEngine;
-    window.speakFrenchText = speakFrenchText;
-    window.selectGameMode = selectGameMode;
-    window.cancelSetup = cancelSetup;
-    window.setTopicCategory = setTopicCategory;
-    window.toggleCardFlip = toggleCardFlip;
-    window.insertClueStarter = insertClueStarter;
-    window.speakCurrentClueInput = speakCurrentClueInput;
-    window.castVoteForPlayer = castVoteForPlayer;
-    window.restartSameGame = restartSameGame;
-    window.backToSetup = backToSetup;
-    window.filterStarters = filterStarters;
-  </script>
-</body>
-</html>
+JavaScript
+window.gameState = {
+  mode: 'group',
+  topicCategory: 'rooms',
+  playerNames: [],
+  impostorCount: 1,
+  secretRoom: null,
+  secretActivity: null,
+  roomCode: null,
+  isHost: false,
+  myPlayerName: ''
+};
